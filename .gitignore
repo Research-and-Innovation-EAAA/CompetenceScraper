@@ -1,0 +1,9 @@
+# Ignores compiled TypeScript files
+**/*.js.map
+**/*.js
+
+# User-specific stuff
+.idea/**
+
+# Node module
+node_modules
