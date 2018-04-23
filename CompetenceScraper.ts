@@ -1,5 +1,6 @@
 import Puppeteer from "puppeteer";
 import {Database, DatabaseOptions} from "./Database";
+import winston from "winston";
 
 let database: Database = new Database(new DatabaseOptions()
     .setHost(process.env.MYSQL_HOST)
@@ -7,6 +8,5 @@ let database: Database = new Database(new DatabaseOptions()
     .setUsername(process.env.MYSQL_USERNAME)
     .setPassword(process.env.MYSQL_PASSWORD));
 
-
-console.log("Hello from " + database.about());
+winston.info("Hello from " + database.about());
 
