@@ -9,5 +9,24 @@ let database: Database = new Database(new DatabaseOptions()
     .setUsername(process.env.MYSQL_USERNAME)
     .setPassword(process.env.MYSQL_PASSWORD));
 
-winston.info("Hello from " + database.about());
+function end() {
+    database.disconnect();
+    winston.info("Database: " + database.about());
+}
+
+async function x() {
+
+    try {
+        let value = await database.getCompetence();
+    } catch (e) {
+        console.log(e);
+    }
+
+}
+
+database.getCompetence().then(() => {
+    end();
+}, () => {
+    end();
+});
 

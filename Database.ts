@@ -1,3 +1,4 @@
+import MYSQL from "mysql";
 
 export class DatabaseOptions {
     private host: string = "localhost";
@@ -47,17 +48,51 @@ export class DatabaseOptions {
     }
 
     about(): string {
-        return this.getUsername()+"\\"+this.getPassword()+"@"+this.getHost()+":"+this.getPort();
+        return "Server="+this.getHost()+";Port="+this.getPort()+";Database="+this.getDatabase()+";Uid="+this.getUsername()+";Pwd="+this.getPassword();
     };
 
     constructor() {};
 }
 
-
 export class Database {
-    constructor(private Options: DatabaseOptions) {};
+    private conn: MYSQL.Connection;
+    private connected = false;
+
+    constructor(private options: DatabaseOptions) {
+        this.conn = MYSQL.createConnection({
+            host: this.options.getHost(),
+            port: this.options.getPort(),
+            user: this.options.getUsername(),
+            password: this.options.getPassword(),
+            database: this.options.getDatabase()
+        });
+        this.connected = true;
+    }
+
+    disconnect() {
+        if (this.isConnected()) {
+            (this.conn as MYSQL.Connection).destroy();
+        }
+        this.connected = false;
+    }
+
+    isConnected() : boolean {
+        return this.connected;
+    }
 
     about(): string {
-        return this.Options.about();
+        return this.options.about();
     };
+
+    async getCompetence() {
+        return new Promise((resolve,reject) => {
+            this.conn.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
+                if (error)
+                    reject(error);
+                console.log('The solution is: ', results[0].solution);
+                resolve(results);
+            });
+        });
+    }
 }
+
