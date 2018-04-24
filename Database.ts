@@ -1,6 +1,11 @@
 import MYSQL from "mysql";
 import stream from "stream";
 
+const COMPETENCE = "kompetence";
+const TITLE = "name";
+const DESCRIPTION = "description";
+const CONCEPTURI = "conceptUri";
+
 export class DatabaseOptions {
     private host: string = "localhost";
     private port: number = 3306;
@@ -56,10 +61,13 @@ export class DatabaseOptions {
 }
 
 export class Database {
-    private conn: MYSQL.Connection;
-    private connected = false;
+    private conn: MYSQL.Connection | undefined = undefined;
 
     constructor(private options: DatabaseOptions) {
+        this.conn = undefined;
+    }
+
+    connect() {
         this.conn = MYSQL.createConnection({
             host: this.options.getHost(),
             port: this.options.getPort(),
@@ -67,18 +75,17 @@ export class Database {
             password: this.options.getPassword(),
             database: this.options.getDatabase()
         });
-        this.connected = true;
     }
 
     disconnect() {
         if (this.isConnected()) {
             (this.conn as MYSQL.Connection).destroy();
         }
-        this.connected = false;
+        this.conn = undefined;
     }
 
     isConnected() : boolean {
-        return this.connected;
+        return this.conn != undefined;
     }
 
     about(): string {
@@ -87,10 +94,25 @@ export class Database {
 
     async getCompetence() {
         return new Promise((resolve,reject) => {
-            this.conn.query('SELECT conceptUri from kompetence', function (error, results, fields) {
-                if (error) reject(error);
-                resolve(results);
-            });
+            if (this.conn == undefined)
+                reject(new Error("Not connected to database"));
+            else
+                (this.conn as MYSQL.Connection).query('SELECT conceptUri from kompetence', function (error, results, fields) {
+                    if (error) reject(error);
+                    resolve(results);
+                });
+        });
+    }
+
+    async storeTitleAndDesc(url: string, title: string, description:string) {
+        return new Promise((resolve,reject) => {
+            if (this.conn == undefined)
+                reject(new Error("Not connected to database"));
+            else
+                (this.conn as MYSQL.Connection).query(`UPDATE ${COMPETENCE} SET ${TITLE}='${title}', ${DESCRIPTION}='${description}' WHERE ${CONCEPTURI}='${url}' `, function (error) {
+                    if (error) reject(error);
+                    resolve();
+                });
         });
     }
 }
