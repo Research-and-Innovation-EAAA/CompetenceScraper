@@ -2,6 +2,7 @@
 export class DatabaseOptions {
     private host: string = "localhost";
     private port: number = 3306;
+    private database: string | undefined = undefined;
     private username: string = "root";
     private password: string | undefined = undefined;
 
@@ -21,11 +22,19 @@ export class DatabaseOptions {
         return this.port;
     }
 
+    setDatabase(database : string | undefined) : DatabaseOptions {
+        this.database = database && database.length > 0 ? database : this.database;
+        return this;
+    }
+    getDatabase() : string | undefined {
+        return this.database;
+    }
+
     setUsername(username : string | undefined) : DatabaseOptions {
         this.username = username && username.length > 0 ? username : this.username;
         return this;
     }
-    getUsername() {
+    getUsername() : string {
         return this.username;
     }
 
@@ -33,7 +42,7 @@ export class DatabaseOptions {
         this.password = password && password.length > 0 ? password : this.password;
         return this;
     }
-    getPassword() {
+    getPassword() : string | undefined  {
         return this.password;
     }
 
