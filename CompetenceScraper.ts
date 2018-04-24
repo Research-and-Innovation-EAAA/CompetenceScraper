@@ -14,19 +14,11 @@ function end() {
     winston.info("Database: " + database.about());
 }
 
-async function x() {
-
-    try {
-        let value = await database.getCompetence();
-    } catch (e) {
-        console.log(e);
-    }
-
-}
-
-database.getCompetence().then(() => {
+database.getCompetence().then((value) => {
+    console.log(value);
     end();
-}, () => {
+}, (error) => {
+    console.log(error);
     end();
 });
 

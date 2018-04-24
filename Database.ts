@@ -1,4 +1,5 @@
 import MYSQL from "mysql";
+import stream from "stream";
 
 export class DatabaseOptions {
     private host: string = "localhost";
@@ -86,10 +87,8 @@ export class Database {
 
     async getCompetence() {
         return new Promise((resolve,reject) => {
-            this.conn.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
-                if (error)
-                    reject(error);
-                console.log('The solution is: ', results[0].solution);
+            this.conn.query('SELECT conceptUri from kompetence', function (error, results, fields) {
+                if (error) reject(error);
                 resolve(results);
             });
         });
