@@ -70,9 +70,12 @@ async function main() {
 
     // Initialize headless browser
     const browser: Browser = await puppeteer.launch({
-        headless: false //true //SCRAPE_TESTING === false
+        headless: SCRAPE_TESTING === false
     });
     const page: puppeteer.Page = await browser.newPage();
+    await page.setExtraHTTPHeaders({
+        'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
+    });
 
     // Scrape competencies
     await scrape(database, page);
