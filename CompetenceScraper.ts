@@ -34,7 +34,7 @@ async function scrape(database: Database, page: puppeteer.Page) {
         await database.storeTitleAndDesc(url, title, description);
 
         // Scrape child competencies
-        let textElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/@onclick`);
+        let textElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Sn")]][1]/li/a/@onclick`);
         for (let id: number = 0 ; id<textElements.length ; id++) {
             let text = await page.evaluate(element => element.textContent, textElements[id]);
             let child_url = text.match(/loadConcept\('(.*)'\).*/)[1];
@@ -44,7 +44,7 @@ async function scrape(database: Database, page: puppeteer.Page) {
         }
 
         // Scrape parent competencies
-        textElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Bredere færdigheder/kompetencer")]][1]/li/a/@onclick`);
+        textElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Bredere")]][1]/li/a/@onclick`);
         for (let id: number = 0 ; id<textElements.length ; id++) {
             let text = await page.evaluate(element => element.textContent, textElements[id]);
             let parent_url = text.match(/loadConcept\('(.*)'\).*/)[1];
@@ -70,7 +70,7 @@ async function main() {
 
     // Initialize headless browser
     const browser: Browser = await puppeteer.launch({
-        headless: SCRAPE_TESTING === false
+        headless: false //true //SCRAPE_TESTING === false
     });
     const page: puppeteer.Page = await browser.newPage();
 
