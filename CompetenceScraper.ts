@@ -18,8 +18,8 @@ async function scrape(database: Database, page: puppeteer.Page) {
 
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
-        if (index>=1)
-            return;
+        /*if (index>=1)
+            return;*/
 
         //Navigate to URL
         let url: string = competencies[index].conceptUri;
@@ -52,7 +52,7 @@ async function main() {
 
     // Initialize headless browser
     const browser: Browser = await puppeteer.launch({
-        headless: false
+        headless: true
     });
     const page: puppeteer.Page = await browser.newPage();
 
@@ -66,6 +66,6 @@ async function main() {
 
 main().then(() => {
     console.log("Successful scraping ended")
-}, () => {
-    console.log("Failed scraping ended")
+}, (error) => {
+    console.log("Failed scraping ended: "+error)
 });

@@ -6,6 +6,11 @@ const TITLE = "name";
 const DESCRIPTION = "description";
 const CONCEPTURI = "conceptUri";
 
+// NOTE: only escapes a " if it's not already escaped
+function escapeDoubleQuotes(str: string) : string {
+    return str.replace(/\\([\s\S])|(")/g,"\\$1$2"); // thanks @slevithan!
+}
+
 export class DatabaseOptions {
     private host: string = "localhost";
     private port: number = 3306;
@@ -108,11 +113,16 @@ export class Database {
         return new Promise((resolve,reject) => {
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
-            else
-                (this.conn as MYSQL.Connection).query(`UPDATE ${COMPETENCE} SET ${TITLE}='${title}', ${DESCRIPTION}='${description}' WHERE ${CONCEPTURI}='${url}' `, function (error) {
+            else {
+                let valTitle = escapeDoubleQuotes(title);
+                let valDesc = escapeDoubleQuotes(description);
+                let q = `UPDATE ${COMPETENCE} SET ${TITLE}="${valTitle}", ${DESCRIPTION}="${valDesc}" WHERE ${CONCEPTURI}="${url}" `;
+                console.log(q);
+                (this.conn as MYSQL.Connection).query(q, function (error) {
                     if (error) reject(error);
                     resolve();
                 });
+            }
         });
     }
 }
