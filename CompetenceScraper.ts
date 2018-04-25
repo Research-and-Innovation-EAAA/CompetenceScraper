@@ -20,8 +20,8 @@ async function scrape(database: Database, page: puppeteer.Page) {
 
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
-        if (index>=20)
-            return;
+        /* if (index>=20)
+            return; */
 
         //Navigate to URL
         let url: string = competencies[index].conceptUri;
