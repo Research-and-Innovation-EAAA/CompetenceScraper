@@ -1,7 +1,8 @@
 import MYSQL from "mysql";
-import stream from "stream";
+import winston from "winston";
 
 const COMPETENCE = "kompetence";
+const COMPETENCE_CATEGORY = "kompetence_kategorisering";
 const TITLE = "name";
 const DESCRIPTION = "description";
 const CONCEPTURI = "conceptUri";
@@ -17,6 +18,7 @@ export class DatabaseOptions {
     private database: string | undefined = undefined;
     private username: string = "root";
     private password: string | undefined = undefined;
+    private testing: boolean = false;
 
     setHost(host : string | undefined) : DatabaseOptions {
         this.host = host && host.length > 0 ? host : this.host;
@@ -58,8 +60,16 @@ export class DatabaseOptions {
         return this.password;
     }
 
+    setTesting(testing : boolean) : DatabaseOptions {
+        this.testing = testing;
+        return this;
+    }
+    getTesting() : boolean  {
+        return this.testing;
+    }
+
     about(): string {
-        return "Server="+this.getHost()+";Port="+this.getPort()+";Database="+this.getDatabase()+";Uid="+this.getUsername()+";Pwd="+this.getPassword();
+        return (this.testing?"Testing ":"")+"Server="+this.getHost()+";Port="+this.getPort()+";Database="+this.getDatabase()+";Uid="+this.getUsername()+";Pwd="+this.getPassword();
     };
 
     constructor() {};
@@ -117,11 +127,34 @@ export class Database {
                 let valTitle = escapeDoubleQuotes(title);
                 let valDesc = escapeDoubleQuotes(description);
                 let q = `UPDATE ${COMPETENCE} SET ${TITLE}="${valTitle}", ${DESCRIPTION}="${valDesc}" WHERE ${CONCEPTURI}="${url}" `;
-                console.log(q);
-                (this.conn as MYSQL.Connection).query(q, function (error) {
-                    if (error) reject(error);
+                if (this.options.getTesting()) {
+                    winston.info(q);
                     resolve();
-                });
+                } else {
+                    (this.conn as MYSQL.Connection).query(q, function (error) {
+                        if (error) reject(error);
+                        resolve();
+                    });
+                }
+            }
+        });
+    }
+
+    storeCategory(url: string, parent_url: string) {
+        return new Promise((resolve,reject) => {
+            if (this.conn == undefined)
+                reject(new Error("Not connected to database"));
+            else {
+                let q = `INSERT INTO ${COMPETENCE_CATEGORY} (superkompetence, subkompetence) VALUES ("${url}", "${url}")`;
+                if (this.options.getTesting()) {
+                    winston.info(q);
+                    resolve();
+                } else {
+                    (this.conn as MYSQL.Connection).query(q, function (error) {
+                        if (error) reject(error);
+                        resolve();
+                    });
+                }
             }
         });
     }
