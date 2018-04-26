@@ -145,7 +145,7 @@ export class Database {
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
             else {
-                let q = `INSERT INTO ${COMPETENCE_CATEGORY} (superkompetence, subkompetence) VALUES ("${url}", "${url}")`;
+                let q = `INSERT INTO ${COMPETENCE_CATEGORY} (superkompetence, subkompetence) VALUES ("${parent_url}", "${url}")`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve();
