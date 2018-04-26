@@ -7,7 +7,7 @@ const SCRAPE_TESTING = process.env.SCRAPE_TESTING==="true";
 
 async function getText(page: puppeteer.Page, xpath: string) {
     let textElements : ElementHandle[] = await page.$x(xpath);
-    let text = await page.evaluate(h1 => h1?h1.textContent:"", textElements[0]);
+    let text = await page.evaluate(h1 => h1.textContent, textElements[0]);
     winston.info(text);
     return text;
 }
