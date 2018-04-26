@@ -34,20 +34,26 @@ async function scrape(database: Database, page: puppeteer.Page) {
         await database.storeTitleAndDesc(url, title, description);
 
         // Scrape child competencies
-        let textElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/@onclick`);
-        for (let id: number = 0 ; id<textElements.length ; id++) {
-            let text = await page.evaluate(element => element.textContent, textElements[id]);
+        let urlElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/@onclick`);
+        let nameElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/text()`);
+        for (let id: number = 0 ; id<urlElements.length ; id++) {
+            let text = await page.evaluate(element => element.textContent, urlElements[id]);
             let child_url = text.match(/loadConcept\('(.*)'\).*/)[1];
+            let child_name = await page.evaluate(element => element.textContent, nameElements[id]);
+            database.storeCompetence(child_url, child_name).catch(() => {}).then(()=>{});
             database.storeCategory(child_url, url).catch((error) => {
                 winston.info("Store category failed: "+error);
             }).then(()=>{});
         }
 
         // Scrape parent competencies
-        textElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Bredere færdigheder/kompetencer")]][1]/li/a/@onclick`);
-        for (let id: number = 0 ; id<textElements.length ; id++) {
-            let text = await page.evaluate(element => element.textContent, textElements[id]);
+        urlElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Bredere færdigheder/kompetencer")]][1]/li/a/@onclick`);
+        nameElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Bredere færdigheder/kompetencer")]][1]/li/a/text()`);
+        for (let id: number = 0 ; id<urlElements.length ; id++) {
+            let text = await page.evaluate(element => element.textContent, urlElements[id]);
             let parent_url = text.match(/loadConcept\('(.*)'\).*/)[1];
+            let parent_name = await page.evaluate(element => element.textContent, nameElements[id]);
+            database.storeCompetence(parent_url, parent_name).catch(() => {}).then(()=>{});
             database.storeCategory(url, parent_url).catch((error) => {
                 winston.info("Store category failed: "+error);
             }).then(()=>{});

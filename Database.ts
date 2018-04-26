@@ -158,5 +158,24 @@ export class Database {
             }
         });
     }
+
+    storeCompetence(conceptUri: string, prefferredLabel: string) {
+        return new Promise((resolve,reject) => {
+            if (this.conn == undefined)
+                reject(new Error("Not connected to database"));
+            else {
+                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel) VALUES ("${conceptUri}", "${prefferredLabel}")`;
+                if (this.options.getTesting()) {
+                    winston.info(q);
+                    resolve();
+                } else {
+                    (this.conn as MYSQL.Connection).query(q, function (error) {
+                        if (error) reject(error);
+                        resolve();
+                    });
+                }
+            }
+        });
+    }
 }
 
