@@ -14,6 +14,29 @@ async function getText(page: puppeteer.Page, xpath: string) {
 
 async function scrape(database: Database, page: puppeteer.Page) {
 
+    // Scrape and store initial toplevel IKT competencies
+    await page.goto("https://ec.europa.eu/esco/portal/skill");
+    await page.select('#conceptFilterList', 'ict');
+    await page.click('#sidebarToggle');
+    const anchors = await page.evaluate(() => {
+        let anchors = document.querySelectorAll('a[onclick]');
+        return [].map.call(anchors, (a: any) => {return {onclick: a.getAttribute('onclick'), name: a.textContent}});
+    });
+    for (let index=0 ; index<anchors.length ; index++ ) {
+        let anchor = anchors[index];
+        let onclickVal = anchor.onclick;
+        //console.log(onclick);
+        let child_url: string = "", child_name: string = anchor.name;
+        if (onclickVal) {
+            let match = onclickVal.match(/loadConcept\('(.*)'\).*/);
+            if (!match)
+                continue;
+            child_url = match[1];
+        }
+        if (child_url && child_name)
+            await database.storeCompetence(child_url, child_name).catch(() => {}).then(()=>{});
+    };
+
     // Query comptence uri from database
     let competencies : Array<any> = (await database.getCompetence() as Array<any>);
     console.log("Number of competencies: "+JSON.stringify(competencies.length));
@@ -76,7 +99,7 @@ async function main() {
 
     // Initialize headless browser
     const browser: Browser = await puppeteer.launch({
-        headless: SCRAPE_TESTING === false
+        headless: SCRAPE_TESTING === true
     });
     const page: puppeteer.Page = await browser.newPage();
     await page.setExtraHTTPHeaders({
