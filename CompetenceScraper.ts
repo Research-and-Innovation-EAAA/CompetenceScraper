@@ -99,7 +99,7 @@ async function main() {
 
     // Initialize headless browser
     const browser: Browser = await puppeteer.launch({
-        headless: SCRAPE_TESTING === true
+        headless: SCRAPE_TESTING === false
     });
     const page: puppeteer.Page = await browser.newPage();
     await page.setExtraHTTPHeaders({
