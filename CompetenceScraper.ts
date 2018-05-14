@@ -1,7 +1,7 @@
 import puppeteer, {Browser, ElementHandle} from "puppeteer";
 import {Database, DatabaseOptions} from "./Database";
 import winston from "winston";
-import {error} from "util";
+//import {error} from "util";
 
 const SCRAPE_TESTING = process.env.SCRAPE_TESTING==="true";
 
@@ -13,15 +13,26 @@ async function getText(page: puppeteer.Page, xpath: string) {
 }
 
 async function scrape(database: Database, page: puppeteer.Page) {
+    // Scrape specific category
+    let grps: string[] = [ 'ict', 'language', 'transversal'];
+    for (let i=0 ; i<grps.length ; i++) {
+        // Scrape and store initial toplevel IKT competencies
+        await page.goto("https://ec.europa.eu/esco/portal/skill");
+        await scrapegrp(database, page, grps[i]);
+    }
 
-    // Scrape and store initial toplevel IKT competencies
-    await page.goto("https://ec.europa.eu/esco/portal/skill");
-    await page.select('#conceptFilterList', 'ict');
+    // Scrape recursive within database
+    await scrapeRecursive(database, page);
+}
+
+async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) {
+    await page.select('#conceptFilterList', grp);
     await page.click('#sidebarToggle');
-    const anchors = await page.evaluate(() => {
-        let anchors = document.querySelectorAll('a[onclick]');
+    const anchors = await page.evaluate((grp) => {
+        let selector: string = 'ul[esco-concept-block='+grp+'] a[onclick]';
+        let anchors = document.querySelectorAll(selector);
         return [].map.call(anchors, (a: any) => {return {onclick: a.getAttribute('onclick'), name: a.textContent}});
-    });
+    }, grp);
     for (let index=0 ; index<anchors.length ; index++ ) {
         let anchor = anchors[index];
         let onclickVal = anchor.onclick;
@@ -34,12 +45,21 @@ async function scrape(database: Database, page: puppeteer.Page) {
             child_url = match[1];
         }
         if (child_url && child_name)
-            await database.storeCompetence(child_url, child_name).catch(() => {}).then(()=>{});
-    };
+            await database.storeCompetence(child_url, child_name, grp).catch(() => {}).then(()=>{});
+    }
+}
 
+async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     // Query comptence uri from database
     let competencies : Array<any> = (await database.getCompetence() as Array<any>);
     console.log("Number of competencies: "+JSON.stringify(competencies.length));
+
+    let hasCompetence = (uri: string): boolean => {
+        for (let i=0 ; i<competencies.length ; i++)
+            if (competencies[i].conceptUri===uri)
+                return true;
+        return false;
+    };
 
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
@@ -48,6 +68,7 @@ async function scrape(database: Database, page: puppeteer.Page) {
 
         //Navigate to URL
         let url: string = competencies[index].conceptUri;
+        let grp: string = competencies[index].grp;
         console.log(url);
         await page.goto(url);
 
@@ -63,7 +84,8 @@ async function scrape(database: Database, page: puppeteer.Page) {
             let text = await page.evaluate(element => element.textContent, urlElements[id]);
             let child_url = text.match(/loadConcept\('(.*)'\).*/)[1];
             let child_name = await page.evaluate(element => element.textContent, nameElements[id]);
-            database.storeCompetence(child_url, child_name).catch(() => {}).then(()=>{});
+            if (!hasCompetence(child_url))
+                database.storeCompetence(child_url, child_name, grp).catch(() => {}).then(()=>{});
             database.storeCategory(child_url, url).catch((error) => {
                 winston.info("Store category failed: "+error);
             }).then(()=>{});
@@ -76,7 +98,8 @@ async function scrape(database: Database, page: puppeteer.Page) {
             let text = await page.evaluate(element => element.textContent, urlElements[id]);
             let parent_url = text.match(/loadConcept\('(.*)'\).*/)[1];
             let parent_name = await page.evaluate(element => element.textContent, nameElements[id]);
-            database.storeCompetence(parent_url, parent_name).catch(() => {}).then(()=>{});
+            if (!hasCompetence(parent_url))
+                database.storeCompetence(parent_url, parent_name, "").catch(() => {}).then(()=>{});
             database.storeCategory(url, parent_url).catch((error) => {
                 winston.info("Store category failed: "+error);
             }).then(()=>{});

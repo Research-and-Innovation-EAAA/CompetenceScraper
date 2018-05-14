@@ -112,7 +112,7 @@ export class Database {
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
             else
-                (this.conn as MYSQL.Connection).query('SELECT conceptUri from kompetence', function (error, results, fields) {
+                (this.conn as MYSQL.Connection).query('SELECT conceptUri, grp from kompetence', function (error, results, fields) {
                     if (error) reject(error);
                     resolve(results);
                 });
@@ -159,12 +159,12 @@ export class Database {
         });
     }
 
-    storeCompetence(conceptUri: string, prefferredLabel: string) {
+    storeCompetence(conceptUri: string, prefferredLabel: string, grp: string) {
         return new Promise((resolve,reject) => {
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
             else {
-                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel) VALUES ("${conceptUri}", "${prefferredLabel}")`;
+                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel, grp) VALUES ("${conceptUri}", "${prefferredLabel}", "${grp}")`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve();
