@@ -17,7 +17,6 @@ async function scrape(database: Database, page: puppeteer.Page) {
     let grps: string[] = [ 'ict', 'language', 'transversal'];
     for (let i=0 ; i<grps.length ; i++) {
         // Scrape and store initial toplevel IKT competencies
-        await page.goto("https://ec.europa.eu/esco/portal/skill");
         await scrapegrp(database, page, grps[i]);
     }
 
@@ -26,6 +25,7 @@ async function scrape(database: Database, page: puppeteer.Page) {
 }
 
 async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) {
+    await page.goto("https://ec.europa.eu/esco/portal/skill");
     await page.select('#conceptFilterList', grp);
     await page.click('#sidebarToggle');
     const anchors = await page.evaluate((grp) => {
@@ -54,12 +54,12 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     let competencies : Array<any> = (await database.getCompetence() as Array<any>);
     console.log("Number of competencies: "+JSON.stringify(competencies.length));
 
-    let hasCompetence = (uri: string): boolean => {
+    /*let hasCompetence = (uri: string): boolean => {
         for (let i=0 ; i<competencies.length ; i++)
             if (competencies[i].conceptUri===uri)
                 return true;
         return false;
-    };
+    };*/
 
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
@@ -84,7 +84,7 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
             let text = await page.evaluate(element => element.textContent, urlElements[id]);
             let child_url = text.match(/loadConcept\('(.*)'\).*/)[1];
             let child_name = await page.evaluate(element => element.textContent, nameElements[id]);
-            if (!hasCompetence(child_url))
+            //if (!hasCompetence(child_url))
                 database.storeCompetence(child_url, child_name, grp).catch(() => {}).then(()=>{});
             database.storeCategory(child_url, url).catch((error) => {
                 winston.info("Store category failed: "+error);
@@ -98,11 +98,23 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
             let text = await page.evaluate(element => element.textContent, urlElements[id]);
             let parent_url = text.match(/loadConcept\('(.*)'\).*/)[1];
             let parent_name = await page.evaluate(element => element.textContent, nameElements[id]);
-            if (!hasCompetence(parent_url))
-                database.storeCompetence(parent_url, parent_name, "").catch(() => {}).then(()=>{});
+            //if (!hasCompetence(parent_url))
+            database.storeCompetence(parent_url, parent_name, "").catch(() => {}).then(()=>{});
             database.storeCategory(url, parent_url).catch((error) => {
                 winston.info("Store category failed: "+error);
             }).then(()=>{});
+        }
+
+        // Scrape additional competencies
+        let headXpath = `//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Nødvendig færdighed/kompetence inden for")] or preceding::h2[contains(., "Supplerende færdighed/kompetencer inden for")]][1]/li/a/`;
+        urlElements = await page.$x(headXpath+`@onclick`);
+        nameElements = await page.$x(headXpath+`text()`);
+        for (let id: number = 0 ; id<urlElements.length ; id++) {
+            let text = await page.evaluate(element => element.textContent, urlElements[id]);
+            let parent_url = text.match(/loadConcept\('(.*)'\).*/)[1];
+            let parent_name = await page.evaluate(element => element.textContent, nameElements[id]);
+            //if (!hasCompetence(parent_url))
+            database.storeCompetence(parent_url, parent_name, "").catch(() => {}).then(()=>{});
         }
     }
 }
