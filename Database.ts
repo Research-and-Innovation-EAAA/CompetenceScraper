@@ -109,15 +109,32 @@ export class Database {
         return this.options.about();
     };
 
-    async getCompetence() {
+    loadCompetencies() : Promise<Competence[]> {
         return new Promise((resolve,reject) => {
-            if (this.conn == undefined)
+            if (this.conn == undefined) {
                 reject(new Error("Not connected to database"));
-            else
-                (this.conn as MYSQL.Connection).query('SELECT conceptUri, grp from kompetence', function (error, results, fields) {
-                    if (error) reject(error);
-                    resolve(results);
-                });
+                return;
+            }
+                let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE} WHERE _id>0`;
+                if (this.options.getTesting()) {
+                    winston.info(q);
+                    resolve([]);
+                } else {
+                    (this.conn as MYSQL.Connection).query(q, function (error, response) {
+                        if (error) reject(error);
+                        let result: Array<Competence> = [];
+                        let fields: string = "";
+                        for (let i=0 ; i<response.length ; i++) {
+                            result[i] = new Competence();
+                            for (let key in response[i]) {
+                                let prop = response[i][key];
+                                if (prop)
+                                    result[i][key as keyof Competence] = prop;
+                            }
+                        }
+                        resolve(result);
+                    });
+                }
         });
     }
 
@@ -163,16 +180,20 @@ export class Database {
 
     loadCompetence(conceptUri: string) : Promise<Competence> {
         return new Promise((resolve,reject) => {
-            if (this.conn == undefined)
+            if (this.conn == undefined) {
                 reject(new Error("Not connected to database"));
-            else {
+                return;
+            }
                 let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE}  WHERE _id>0 AND conceptUri="${conceptUri}"`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve(new Competence());
                 } else {
                     (this.conn as MYSQL.Connection).query(q, function (error, response) {
-                        if (error) reject(error);
+                        if (error) {
+                            reject(error);
+                            return;
+                        }
                         let result: Competence = new Competence();
                         let fields: string = "";
                         if (response.length===1) {
@@ -185,7 +206,6 @@ export class Database {
                         resolve(result);
                     });
                 }
-            }
         });
     }
 

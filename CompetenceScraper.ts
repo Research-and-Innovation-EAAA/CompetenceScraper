@@ -59,19 +59,12 @@ async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) 
 
 async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     // Query comptence uri from database
-    let competencies : Array<any> = (await database.getCompetence() as Array<any>);
+    let competencies = await database.loadCompetencies();
     console.log("Number of competencies: "+JSON.stringify(competencies.length));
 
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
-        let competence: Competence;
-        /* if (index>=20)
-            return; */
-
-        //Navigate to URL
-        competence = new Competence();
-        competence.conceptUri = competencies[index].conceptUri;
-        competence.grp = competencies[index].grp;
+        let competence: Competence = competencies[index];
         //console.log(url);
         await page.goto(competence.conceptUri as string);
 
