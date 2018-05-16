@@ -138,27 +138,6 @@ export class Database {
         });
     }
 
-    async storeTitleAndDesc(url: string, title: string, description:string) {
-        return new Promise((resolve,reject) => {
-            if (this.conn == undefined)
-                reject(new Error("Not connected to database"));
-            else {
-                let valTitle = escapeDoubleQuotes(title);
-                let valDesc = escapeDoubleQuotes(description);
-                let q = `UPDATE ${COMPETENCE} SET ${TITLE}="${valTitle}", ${DESCRIPTION}="${valDesc}" WHERE ${CONCEPTURI}="${url}" `;
-                if (this.options.getTesting()) {
-                    winston.info(q);
-                    resolve();
-                } else {
-                    (this.conn as MYSQL.Connection).query(q, function (error) {
-                        if (error) reject(error);
-                        resolve();
-                    });
-                }
-            }
-        });
-    }
-
     storeCategory(url: string, parent_url: string) {
         return new Promise((resolve,reject) => {
             if (this.conn == undefined)
