@@ -1,3 +1,4 @@
+import Competence from "./Competence";
 import puppeteer, {Browser, ElementHandle} from "puppeteer";
 import {Database, DatabaseOptions} from "./Database";
 import winston from "winston";
@@ -37,15 +38,22 @@ async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) 
         let anchor = anchors[index];
         let onclickVal = anchor.onclick;
         //console.log(onclick);
-        let child_url: string = "", child_name: string = anchor.name;
         if (onclickVal) {
             let match = onclickVal.match(/loadConcept\('(.*)'\).*/);
             if (!match)
                 continue;
-            child_url = match[1];
+            let child: Competence = new Competence(undefined,
+                undefined,
+                match[1],
+                undefined,
+                anchor.name,
+                anchor.name,
+                //undefined,
+                grp);
+            await database.storeCompetence(child)
+                .catch(() => {})
+                .then(()=>{});
         }
-        if (child_url && child_name)
-            await database.storeCompetence(child_url, child_name, grp).catch(() => {}).then(()=>{});
     }
 }
 
@@ -54,55 +62,86 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     let competencies : Array<any> = (await database.getCompetence() as Array<any>);
     console.log("Number of competencies: "+JSON.stringify(competencies.length));
 
-    /*let hasCompetence = (uri: string): boolean => {
-        for (let i=0 ; i<competencies.length ; i++)
-            if (competencies[i].conceptUri===uri)
-                return true;
-        return false;
-    };*/
-
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
+        let competence: Competence;
         /* if (index>=20)
             return; */
 
         //Navigate to URL
-        let url: string = competencies[index].conceptUri;
-        let grp: string = competencies[index].grp;
-        console.log(url);
-        await page.goto(url);
+        competence = new Competence();
+        competence.conceptUri = competencies[index].conceptUri;
+        competence.grp = competencies[index].grp;
+        //console.log(url);
+        await page.goto(competence.conceptUri as string);
 
         // Scrape title and description
-        let title: string = await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`);
-        let description: string = await getText(page,`//*[@id="dataContainer"]/article/div/p[1]/text()`);
-        await database.storeTitleAndDesc(url, title, description);
+        competence.name = competence.prefferredLabel = await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`);
+        competence.description = await getText(page,`//*[@id="dataContainer"]/article/div/p[1]/text()`);
+
+        // Scrape alternative labels
+        competence.altLabels = "";
+        let nameElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Alternativ betegnelse")]][1]/li/p/text()`);
+        for (let id: number = 0 ; id<nameElements.length ; id++) {
+            let txt = await page.evaluate(element => element.textContent, nameElements[id]);
+            if (txt) {
+                if (competence.altLabels !== "")
+                    competence.altLabels += "/";
+                competence.altLabels += txt;
+            }
+        }
+
+        // Update competence in database
+        await database.updateCompetence(competence);
 
         // Scrape child competencies
         let urlElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/@onclick`);
-        let nameElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/text()`);
+        nameElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/text()`);
         for (let id: number = 0 ; id<urlElements.length ; id++) {
-            let text = await page.evaluate(element => element.textContent, urlElements[id]);
-            let child_url = text.match(/loadConcept\('(.*)'\).*/)[1];
-            let child_name = await page.evaluate(element => element.textContent, nameElements[id]);
-            //if (!hasCompetence(child_url))
-                database.storeCompetence(child_url, child_name, grp).catch(() => {}).then(()=>{});
-            database.storeCategory(child_url, url).catch((error) => {
-                winston.info("Store category failed: "+error);
-            }).then(()=>{});
+            let txt = await page.evaluate(element => element.textContent, urlElements[id]);
+            let url = txt.match(/loadConcept\('(.*)'\).*/)[1];
+            let child : Competence = await database.loadCompetence(url);
+            if (!child.conceptUri) {
+                child.conceptUri = url;
+                child.name = child.prefferredLabel
+                    = await page.evaluate(element => element.textContent, nameElements[id]);
+                child.grp = competence.grp;
+                database.storeCompetence(child)
+                    .then(()=>{})
+                    .catch((error) => {
+                        winston.info("Store category failed: "+error);
+                    });
+                database.storeCategory(child.conceptUri as string, competence.conceptUri as string)
+                    .then(()=>{})
+                    .catch((error) => {
+                        winston.info("Store category failed: "+error);
+                    });
+            }
         }
 
         // Scrape parent competencies
         urlElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Bredere færdigheder/kompetencer")]][1]/li/a/@onclick`);
         nameElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Bredere færdigheder/kompetencer")]][1]/li/a/text()`);
         for (let id: number = 0 ; id<urlElements.length ; id++) {
-            let text = await page.evaluate(element => element.textContent, urlElements[id]);
-            let parent_url = text.match(/loadConcept\('(.*)'\).*/)[1];
-            let parent_name = await page.evaluate(element => element.textContent, nameElements[id]);
-            //if (!hasCompetence(parent_url))
-            database.storeCompetence(parent_url, parent_name, "").catch(() => {}).then(()=>{});
-            database.storeCategory(url, parent_url).catch((error) => {
-                winston.info("Store category failed: "+error);
-            }).then(()=>{});
+            let txt = await page.evaluate(element => element.textContent, urlElements[id]);
+            let url = txt.match(/loadConcept\('(.*)'\).*/)[1];
+            let parent : Competence = await database.loadCompetence(url);
+            if (!parent.conceptUri) {
+                parent.conceptUri = url;
+                parent.name = parent.prefferredLabel
+                    = await page.evaluate(element => element.textContent, nameElements[id]);
+                parent.grp = competence.grp;
+                database.storeCompetence(parent)
+                    .then(()=>{})
+                    .catch((error) => {
+                        winston.info("Store category failed: "+error);
+                    });
+                database.storeCategory(competence.conceptUri as string, parent.conceptUri as string)
+                    .then(()=>{})
+                    .catch((error) => {
+                        winston.info("Store category failed: "+error);
+                    });
+            }
         }
 
         // Scrape additional competencies
@@ -111,10 +150,15 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
         nameElements = await page.$x(headXpath+`text()`);
         for (let id: number = 0 ; id<urlElements.length ; id++) {
             let text = await page.evaluate(element => element.textContent, urlElements[id]);
-            let parent_url = text.match(/loadConcept\('(.*)'\).*/)[1];
-            let parent_name = await page.evaluate(element => element.textContent, nameElements[id]);
-            //if (!hasCompetence(parent_url))
-            database.storeCompetence(parent_url, parent_name, "").catch(() => {}).then(()=>{});
+            let url = text.match(/loadConcept\('(.*)'\).*/)[1];
+            let extra : Competence = await database.loadCompetence(url);
+            if (!extra.conceptUri) {
+                extra.conceptUri = url;
+                extra.name = extra.prefferredLabel = await page.evaluate(element => element.textContent, nameElements[id]);
+                database.storeCompetence(extra)
+                    .then(()=>{})
+                    .catch(() => {});
+            }
         }
     }
 }

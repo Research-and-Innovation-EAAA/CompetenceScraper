@@ -1,5 +1,7 @@
+import Competence from "./Competence";
 import MYSQL from "mysql";
 import winston from "winston";
+import {type} from "os";
 
 const COMPETENCE = "kompetence";
 const COMPETENCE_CATEGORY = "kompetence_kategorisering";
@@ -159,12 +161,78 @@ export class Database {
         });
     }
 
-    storeCompetence(conceptUri: string, prefferredLabel: string, grp: string) {
+    loadCompetence(conceptUri: string) : Promise<Competence> {
         return new Promise((resolve,reject) => {
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
             else {
-                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel, grp) VALUES ("${conceptUri}", "${prefferredLabel}", "${grp}")`;
+                let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE}  WHERE _id>0 AND conceptUri="${conceptUri}"`;
+                if (this.options.getTesting()) {
+                    winston.info(q);
+                    resolve(new Competence());
+                } else {
+                    (this.conn as MYSQL.Connection).query(q, function (error, response) {
+                        if (error) reject(error);
+                        let result: Competence = new Competence();
+                        let fields: string = "";
+                        if (response.length===1) {
+                            for (let key in response[0]) {
+                                let prop = response[0][key];
+                                if (prop)
+                                    result[key as keyof Competence] = prop;
+                            }
+                        }
+                        resolve(result);
+                    });
+                }
+            }
+        });
+    }
+
+    storeCompetence(competence: Competence) {
+        return new Promise((resolve,reject) => {
+            if (this.conn == undefined)
+                reject(new Error("Not connected to database"));
+            else {
+                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel, grp) VALUES ("${competence.conceptUri}", "${competence.prefferredLabel}", "${competence.grp}")`;
+                if (this.options.getTesting()) {
+                    winston.info(q);
+                    resolve();
+                } else {
+                    (this.conn as MYSQL.Connection).query(q, function (error) {
+                        if (error) reject(error);
+                        resolve();
+                    });
+                }
+            }
+        });
+    }
+
+    updateCompetence(competence: Competence) {
+        return new Promise((resolve,reject) => {
+            let getProperty = function <T, K extends keyof T>(obj: T, key: K) {
+                return obj[key];  // Inferred type is T[K]
+            };
+            if (this.conn == undefined)
+                reject(new Error("Not connected to database"));
+            else if (!competence.conceptUri && !competence._id)
+                reject(new Error("No competence key provided"));
+            else {
+                let fields: string = "";
+                for (let key in competence) {
+                    let prop = getProperty(competence,key as keyof Competence);
+                    if (prop) {
+                        if (fields!="") {
+                            fields+=",";
+                        }
+                        fields += (key+"=");
+                        if (typeof prop === "string")
+                            fields += ('"'+prop+'"');
+                        else
+                            fields += prop;
+                    }
+                }
+                let q = `UPDATE ${COMPETENCE} SET ${fields} WHERE _id>0 AND conceptUri="${competence.conceptUri}"`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve();
