@@ -2,9 +2,9 @@ import Competence from "./Competence";
 import puppeteer, {Browser, ElementHandle} from "puppeteer";
 import {Database, DatabaseOptions} from "./Database";
 import winston from "winston";
-//import {error} from "util";
 
 const SCRAPE_TESTING = process.env.SCRAPE_TESTING==="true";
+let Visited_Urls = {};
 
 async function getText(page: puppeteer.Page, xpath: string) {
     let textElements : ElementHandle[] = await page.$x(xpath);
@@ -66,6 +66,8 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     for (let index: number = 0 ; index<competencies.length ; index++) {
         let competence: Competence = competencies[index];
         //console.log(url);
+        if (!competence.conceptUri)
+            continue;
         await page.goto(competence.conceptUri as string);
 
         // Scrape title and description
