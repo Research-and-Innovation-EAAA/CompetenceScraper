@@ -1,28 +1,17 @@
 import Competence from "./Competence";
-import puppeteer, {Browser, ElementHandle} from "puppeteer";
+import * as puppeteer from "puppeteer";
 import {Database, DatabaseOptions} from "./Database";
-import winston from "winston";
+import * as winston from "winston";
 
-const SCRAPE_TESTING = process.env.SCRAPE_TESTING==="true";
 let Visited_Urls = {};
+const SCRAPE_TESTING = process.env.SCRAPE_TESTING==="true";
+
 
 async function getText(page: puppeteer.Page, xpath: string) {
-    let textElements : ElementHandle[] = await page.$x(xpath);
+    let textElements : puppeteer.ElementHandle[] = await page.$x(xpath);
     let text = await page.evaluate(h1 => h1?h1.textContent:"", textElements[0]);
     winston.info(text);
     return text;
-}
-
-async function scrape(database: Database, page: puppeteer.Page) {
-    // Scrape specific category
-    let grps: string[] = [ 'ict', 'language', 'transversal'];
-    for (let i=0 ; i<grps.length ; i++) {
-        // Scrape and store initial toplevel IKT competencies
-        await scrapegrp(database, page, grps[i]);
-    }
-
-    // Scrape recursive within database
-    await scrapeRecursive(database, page);
 }
 
 async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) {
@@ -76,7 +65,7 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
 
         // Scrape alternative labels
         competence.altLabels = "";
-        let nameElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Alternativ betegnelse")]][1]/li/p/text()`);
+        let nameElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Alternativ betegnelse")]][1]/li/p/text()`);
         for (let id: number = 0 ; id<nameElements.length ; id++) {
             let txt = await page.evaluate(element => element.textContent, nameElements[id]);
             if (txt) {
@@ -90,7 +79,7 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
         await database.updateCompetence(competence);
 
         // Scrape child competencies
-        let urlElements : ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/@onclick`);
+        let urlElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/@onclick`);
         nameElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/text()`);
         for (let id: number = 0 ; id<urlElements.length ; id++) {
             let txt = await page.evaluate(element => element.textContent, urlElements[id]);
@@ -158,21 +147,10 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     }
 }
 
-async function main() {
-
-    // Setup database
-    let database: Database = new Database(new DatabaseOptions()
-        .setHost(process.env.MYSQL_HOST)
-        .setPort(Number(process.env.MYSQL_PORT))
-        .setDatabase(process.env.MYSQL_DATABASE)
-        .setUsername(process.env.MYSQL_USERNAME)
-        .setPassword(process.env.MYSQL_PASSWORD)
-        .setTesting(SCRAPE_TESTING));
-    winston.info("Database: " + database.about());
-    database.connect();
+export default async function scrape(database: Database ) {
 
     // Initialize headless browser
-    const browser: Browser = await puppeteer.launch({
+    const browser: puppeteer.Browser = await puppeteer.launch({
         headless: SCRAPE_TESTING === false
     });
     const page: puppeteer.Page = await browser.newPage();
@@ -180,16 +158,18 @@ async function main() {
         'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
     });
 
-    // Scrape competencies
-    await scrape(database, page);
+    // Scrape specific category
+    let grps: string[] = [ 'ict', 'language', 'transversal'];
+    for (let i=0 ; i<grps.length ; i++) {
+        // Scrape and store initial toplevel IKT competencies
+        await scrapegrp(database, page, grps[i]);
+    }
+
+    // Scrape recursive within database
+    await scrapeRecursive(database, page);
+
 
     // Clean up browser and database
     browser.close();
-    database.disconnect();
 }
 
-main().then(() => {
-    console.log("Successful scraping ended")
-}, (error) => {
-    console.log("Failed scraping ended: "+error)
-});

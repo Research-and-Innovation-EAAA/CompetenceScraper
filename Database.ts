@@ -1,7 +1,6 @@
 import Competence from "./Competence";
-import MYSQL from "mysql";
+import * as MYSQL from "mysql";
 import winston from "winston";
-import {type} from "os";
 
 const COMPETENCE = "kompetence";
 const COMPETENCE_CATEGORY = "kompetence_kategorisering";
@@ -84,13 +83,22 @@ export class Database {
         this.conn = undefined;
     }
 
-    connect() {
+    async connect() : Promise<MYSQL.Connection> {
         this.conn = MYSQL.createConnection({
             host: this.options.getHost(),
             port: this.options.getPort(),
             user: this.options.getUsername(),
             password: this.options.getPassword(),
             database: this.options.getDatabase()
+        });
+        let Connection = this.conn;
+        return new Promise<MYSQL.Connection>((resolve,reject) => {
+            Connection.connect((err) => {
+                if (err)
+                    reject(err);
+                else
+                    resolve(Connection);
+            });
         });
     }
 
@@ -242,6 +250,20 @@ export class Database {
                     });
                 }
             }
+        });
+    }
+
+    async execute(query: string) {
+        return new Promise((resolve,reject) => {
+                if (this.options.getTesting()) {
+                    winston.info(query);
+                    resolve();
+                } else {
+                    (this.conn as MYSQL.Connection).query(query, function (error) {
+                        if (error) reject(error);
+                        resolve();
+                    });
+                }
         });
     }
 }
