@@ -123,7 +123,7 @@ export class Database {
                 reject(new Error("Not connected to database"));
                 return;
             }
-                let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE} WHERE _id>0 AND conceptUri is not null`;
+                let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE} WHERE _id=13732 AND conceptUri is not null`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve([]);
