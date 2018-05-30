@@ -21,7 +21,7 @@ async function main() {
     await scrape(database);
 
     // Match competencies
-    // await matchCompetencies(database);
+    await matchCompetencies(database);
 
 
     database.disconnect();

@@ -31,8 +31,7 @@ async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) 
             let match = onclickVal.match(/loadConcept\('(.*)'\).*/);
             if (!match)
                 continue;
-            let child: Competence = new Competence();
-            child.initializeValues({
+            let child: Competence = new Competence({
                 "conceptUri": match[1],
                 "prefferredLabel": anchor.name,
                 "name": anchor.name,
@@ -75,6 +74,27 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
                 competence.set("altLabels",txt);
             }
         }
+
+        // Build default search string
+        let labels = competence.get("altLabels").split("/");
+        labels.unshift(competence.get("prefferredLabel"));
+        let searchStr = "";
+        let specialChars = "+*.()[]";
+        labels.forEach((label) => {
+            if (label && label.length>0) {
+                if (searchStr.length>0)
+                    searchStr += "|";
+                if (!label[0].includes(specialChars))
+                    searchStr += "[[:<:]]";
+                for (let i=0 ; i<label.length ; i++) {
+                    let char = label[i];
+                    searchStr += char.includes(specialChars)?"\\\\"+char:char;
+                }
+                if (!label[label.length-1].includes(specialChars))
+                    searchStr += "[[:>:]]";
+            }
+        });
+        competence.set("defaultSearchPatterns", searchStr&&searchStr.length>0?searchStr:undefined);
 
         // Update competence in database
         await database.updateCompetence(competence);
