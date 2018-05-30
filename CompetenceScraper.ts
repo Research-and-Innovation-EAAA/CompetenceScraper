@@ -70,8 +70,8 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
             if (txt) {
                 let altLabels = competence.get("altLabels");
                 if (altLabels !== "")
-                    competence.set("altLabels", altLabels += "/");
-                competence.set("altLabels",txt);
+                    altLabels += "/";
+                competence.set("altLabels",altLabels+txt);
             }
         }
 
