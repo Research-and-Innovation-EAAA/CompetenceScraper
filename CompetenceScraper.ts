@@ -88,7 +88,7 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
                     searchStr += "[[:<:]]";
                 for (let i=0 ; i<label.length ; i++) {
                     let char = label[i];
-                    searchStr += char.includes(specialChars)?"\\\\"+char:char;
+                    searchStr += specialChars.includes(char)?"\\\\"+char:char;
                 }
                 if (!specialChars.includes(label[label.length-1]))
                     searchStr += "[[:>:]]";
