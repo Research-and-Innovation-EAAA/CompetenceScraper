@@ -31,14 +31,12 @@ async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) 
             let match = onclickVal.match(/loadConcept\('(.*)'\).*/);
             if (!match)
                 continue;
-            let child: Competence = new Competence(undefined,
-                undefined,
-                match[1],
-                undefined,
-                anchor.name,
-                anchor.name,
-                //undefined,
-                grp);
+            let child: Competence = new Competence({
+                "conceptUri": match[1],
+                "prefferredLabel": anchor.name,
+                "name": anchor.name,
+                "grp": grp
+            });
             await database.storeCompetence(child)
                 .catch(() => {})
                 .then(()=>{});
@@ -55,23 +53,24 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     for (let index: number = 0 ; index<competencies.length ; index++) {
         let competence: Competence = competencies[index];
         //console.log(url);
-        if (!competence.conceptUri)
+        if (!competence.get("conceptUri"))
             continue;
-        await page.goto(competence.conceptUri as string);
+        await page.goto(competence.get("conceptUri") as string);
 
         // Scrape title and description
-        competence.name = competence.prefferredLabel = await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`);
-        competence.description = await getText(page,`//*[@id="dataContainer"]/article/div/p[1]/text()`);
+        competence.set("name", await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`));
+        competence.set("prefferredLabel", competence.get("name"));
+        competence.set("description", await getText(page,`//*[@id="dataContainer"]/article/div/p[1]/text()`));
 
         // Scrape alternative labels
-        competence.altLabels = "";
+        competence.set("altLabels", "");
         let nameElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Alternativ betegnelse")]][1]/li/p/text()`);
         for (let id: number = 0 ; id<nameElements.length ; id++) {
             let txt = await page.evaluate(element => element.textContent, nameElements[id]);
             if (txt) {
                 if (competence.altLabels !== "")
                     competence.altLabels += "/";
-                competence.altLabels += txt;
+                competence.set("altLabels",txt);
             }
         }
 
