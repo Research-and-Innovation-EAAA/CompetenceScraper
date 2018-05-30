@@ -63,17 +63,17 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
         competence.set("description", await getText(page,`//*[@id="dataContainer"]/article/div/p[1]/text()`));
 
         // Scrape alternative labels
-        competence.set("altLabels", "");
+        let altLabels = "";
         let nameElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Alternativ betegnelse")]][1]/li/p/text()`);
         for (let id: number = 0 ; id<nameElements.length ; id++) {
             let txt = await page.evaluate(element => element.textContent, nameElements[id]);
             if (txt) {
-                let altLabels = competence.get("altLabels");
                 if (altLabels !== "")
                     altLabels += "/";
-                competence.set("altLabels",altLabels+txt);
+                altLabels += txt;
             }
         }
+        competence.set("altLabels", altLabels);
 
         // Build default search string
         let labels = competence.get("altLabels").split("/");
