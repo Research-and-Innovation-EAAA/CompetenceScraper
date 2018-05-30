@@ -1,4 +1,4 @@
-import Competence from "./Competence";
+import {Competence} from "./Competence";
 import * as MYSQL from "mysql";
 import winston from "winston";
 
@@ -201,7 +201,7 @@ export class Database {
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
             else {
-                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel, grp) VALUES ("${competence.conceptUri}", "${competence.prefferredLabel}", "${competence.grp}")`;
+                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel, grp) VALUES ("${competence.get("conceptUri")}", "${competence.get("prefferredLabel")}", "${competence.get("grp")}")`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve();
@@ -222,7 +222,7 @@ export class Database {
             };
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
-            else if (!competence.conceptUri && !competence._id)
+            else if (!competence.get("conceptUri") && !competence.get("_id"))
                 reject(new Error("No competence key provided"));
             else {
                 let fields: string = "";
@@ -239,7 +239,7 @@ export class Database {
                             fields += prop;
                     }
                 }
-                let q = `UPDATE ${COMPETENCE} SET ${fields} WHERE _id>0 AND conceptUri="${competence.conceptUri}"`;
+                let q = `UPDATE ${COMPETENCE} SET ${fields} WHERE _id>0 AND conceptUri="${competence.get("conceptUri")}"`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve();

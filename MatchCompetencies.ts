@@ -1,4 +1,4 @@
-import Competence from "./Competence";
+import {Competence} from "./Competence";
 import {Database, DatabaseOptions} from "./Database";
 import * as winston from "winston";
 
@@ -22,7 +22,7 @@ export default async function matchCompetencies(database: Database) {
     let competencies = await database.loadCompetencies();
 
     for (let i=0 ; i<competencies.length ; i++) {
-        let id : number = competencies[i]._id?competencies[i]._id as number:NaN;
+        let id : number = competencies[i].get("_id")?competencies[i].get("_id") as number:NaN;
         await matchCompetence(database, id);
     }
 }

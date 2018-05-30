@@ -1,4 +1,4 @@
-import Competence from "./Competence";
+import {Competence} from "./Competence";
 import * as puppeteer from "puppeteer";
 import {Database, DatabaseOptions} from "./Database";
 import * as winston from "winston";
@@ -31,7 +31,8 @@ async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) 
             let match = onclickVal.match(/loadConcept\('(.*)'\).*/);
             if (!match)
                 continue;
-            let child: Competence = new Competence({
+            let child: Competence = new Competence();
+            child.initializeValues({
                 "conceptUri": match[1],
                 "prefferredLabel": anchor.name,
                 "name": anchor.name,
@@ -68,8 +69,9 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
         for (let id: number = 0 ; id<nameElements.length ; id++) {
             let txt = await page.evaluate(element => element.textContent, nameElements[id]);
             if (txt) {
-                if (competence.altLabels !== "")
-                    competence.altLabels += "/";
+                let altLabels = competence.get("altLabels");
+                if (altLabels !== "")
+                    competence.set("altLabels", altLabels += "/");
                 competence.set("altLabels",txt);
             }
         }
@@ -84,17 +86,17 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
             let txt = await page.evaluate(element => element.textContent, urlElements[id]);
             let url = txt.match(/loadConcept\('(.*)'\).*/)[1];
             let child : Competence = await database.loadCompetence(url);
-            if (!child.conceptUri) {
-                child.conceptUri = url;
-                child.name = child.prefferredLabel
-                    = await page.evaluate(element => element.textContent, nameElements[id]);
-                child.grp = competence.grp;
+            if (!child.get("conceptUri")) {
+                child.set("conceptUri", url);
+                child.set("name", await page.evaluate(element => element.textContent, nameElements[id]));
+                child.set("prefferredLabel", child.get("name"));
+                child.set("grp", competence.get("grp"));
                 database.storeCompetence(child)
                     .then(()=>{})
                     .catch((error) => {
                         winston.info("Store category failed: "+error);
                     });
-                database.storeCategory(child.conceptUri as string, competence.conceptUri as string)
+                database.storeCategory(child.get("conceptUri") as string, competence.get("conceptUri") as string)
                     .then(()=>{})
                     .catch((error) => {
                         winston.info("Store category failed: "+error);
@@ -109,17 +111,17 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
             let txt = await page.evaluate(element => element.textContent, urlElements[id]);
             let url = txt.match(/loadConcept\('(.*)'\).*/)[1];
             let parent : Competence = await database.loadCompetence(url);
-            if (!parent.conceptUri) {
-                parent.conceptUri = url;
-                parent.name = parent.prefferredLabel
-                    = await page.evaluate(element => element.textContent, nameElements[id]);
-                parent.grp = competence.grp;
+            if (!parent.get("conceptUri")) {
+                parent.set("conceptUri", url);
+                parent.set("prefferredLabel", await page.evaluate(element => element.textContent, nameElements[id]));
+                parent.set("name", parent.get("prefferredLabel"));
+                parent.set("grp", competence.get("grp"));
                 database.storeCompetence(parent)
                     .then(()=>{})
                     .catch((error) => {
                         winston.info("Store category failed: "+error);
                     });
-                database.storeCategory(competence.conceptUri as string, parent.conceptUri as string)
+                database.storeCategory(competence.get("conceptUri") as string, parent.get("conceptUri") as string)
                     .then(()=>{})
                     .catch((error) => {
                         winston.info("Store category failed: "+error);
@@ -135,9 +137,10 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
             let text = await page.evaluate(element => element.textContent, urlElements[id]);
             let url = text.match(/loadConcept\('(.*)'\).*/)[1];
             let extra : Competence = await database.loadCompetence(url);
-            if (!extra.conceptUri) {
-                extra.conceptUri = url;
-                extra.name = extra.prefferredLabel = await page.evaluate(element => element.textContent, nameElements[id]);
+            if (!extra.get("conceptUri")) {
+                extra.set("conceptUri", url);
+                extra.set("name", await page.evaluate(element => element.textContent, nameElements[id]));
+                extra.set("prefferredLabel", extra.get("name"));
                 database.storeCompetence(extra)
                     .then(()=>{})
                     .catch(() => {});
