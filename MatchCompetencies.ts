@@ -3,12 +3,12 @@ import {Database, DatabaseOptions} from "./Database";
 import * as winston from "winston";
 
 
-async function matchCompetence(database: Database, competenceId: number) {
+async function matchCompetence(database: Database, competenceId: number, regular_exp: string) {
 
     // Add matches
-    let query: string = "insert ignore into annonce_kompetence (annonce_id, kompetence_id) " +
-        " SELECT a._id, k._id FROM annonce a join kompetence k on k._id="+competenceId+
-        " WHERE a.searchable_body REGEXP if(k.overriddenSearchPatterns is not null, k.overriddenSearchPatterns, k.defaultSearchPatterns)";
+    let query: string = `insert ignore into annonce_kompetence (annonce_id, kompetence_id)` +
+        ` SELECT a._id annonce_id, ${competenceId} kompetence_id FROM annonce a ` +
+        ` WHERE a.searchable_body REGEXP "${regular_exp}"`;
     await database.execute(query);
 
     // Update match counter
@@ -22,7 +22,9 @@ export default async function matchCompetencies(database: Database) {
     let competencies = await database.loadCompetencies();
 
     for (let i=0 ; i<competencies.length ; i++) {
-        let id : number = competencies[i].get("_id")?competencies[i].get("_id") as number:NaN;
-        await matchCompetence(database, id);
+        let c = competencies[i];
+        let regular_exp : string = c.get("overriddenSearchPatterns")?c.get("overriddenSearchPatterns"):c.get("defaultSearchPatterns");
+        let id : number = c.get("_id")?competencies[i].get("_id") as number:NaN;
+        await matchCompetence(database, id, regular_exp);
     }
 }

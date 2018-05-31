@@ -124,7 +124,7 @@ export class Database {
                 reject(new Error("Not connected to database"));
                 return;
             }
-            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE}`;
+            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, defaultSearchPatterns, overriddenSearchPatterns, grp FROM ${COMPETENCE} `;
             if (this.options.getTesting()) {
                 winston.info(q);
                 resolve([]);
@@ -172,7 +172,7 @@ export class Database {
                 reject(new Error("Not connected to database"));
                 return;
             }
-            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE}  WHERE _id>0 AND conceptUri="${conceptUri}"`;
+            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, defaultSearchPatterns, overriddenSearchPatterns, grp FROM ${COMPETENCE}  WHERE _id>0 AND conceptUri="${conceptUri}"`;
             if (this.options.getTesting()) {
                 winston.info(q);
                 resolve(new Competence());
