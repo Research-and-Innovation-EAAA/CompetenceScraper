@@ -52,10 +52,11 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
         let competence: Competence = competencies[index];
+        let url = competence.get("conceptUri");
         //console.log(url);
-        if (!competence.get("conceptUri"))
+        if (!url)
             continue;
-        await page.goto(competence.get("conceptUri") as string);
+        await page.goto(url as string);
 
         // Scrape title and description
         competence.set("name", await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`));
