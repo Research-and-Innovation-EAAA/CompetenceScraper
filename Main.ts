@@ -23,7 +23,6 @@ async function main() {
     // Match competencies
     await matchCompetencies(database);
 
-
     database.disconnect();
 }
 

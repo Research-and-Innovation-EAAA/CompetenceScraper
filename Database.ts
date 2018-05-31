@@ -1,6 +1,7 @@
 import {Competence} from "./Competence";
 import * as MYSQL from "mysql";
 import winston from "winston";
+import {isObject} from "util";
 
 const COMPETENCE = "kompetence";
 const COMPETENCE_CATEGORY = "kompetence_kategorisering";
@@ -123,26 +124,26 @@ export class Database {
                 reject(new Error("Not connected to database"));
                 return;
             }
-                let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE} WHERE _id>0 AND conceptUri is not null`;
-                if (this.options.getTesting()) {
-                    winston.info(q);
-                    resolve([]);
-                } else {
-                    (this.conn as MYSQL.Connection).query(q, function (error, response) {
-                        if (error) reject(error);
-                        let result: Array<Competence> = [];
-                        let fields: string = "";
-                        for (let i=0 ; i<response.length ; i++) {
-                            result[i] = new Competence();
-                            for (let key in response[i]) {
-                                let prop = response[i][key];
-                                if (prop)
-                                    result[i][key as keyof Competence] = prop;
-                            }
+            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE}`;
+            if (this.options.getTesting()) {
+                winston.info(q);
+                resolve([]);
+            } else {
+                (this.conn as MYSQL.Connection).query(q, function (error, response) {
+                    if (error) reject(error);
+                    let result: Array<Competence> = [];
+                    let fields: string = "";
+                    for (let i=0 ; i<response.length ; i++) {
+                        result[i] = new Competence();
+                        for (let key in response[i]) {
+                            let prop = response[i][key];
+                            if (prop)
+                                result[i][key as keyof Competence] = prop;
                         }
-                        resolve(result);
-                    });
-                }
+                    }
+                    resolve(result);
+                });
+            }
         });
     }
 
@@ -171,28 +172,28 @@ export class Database {
                 reject(new Error("Not connected to database"));
                 return;
             }
-                let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE}  WHERE _id>0 AND conceptUri="${conceptUri}"`;
-                if (this.options.getTesting()) {
-                    winston.info(q);
-                    resolve(new Competence());
-                } else {
-                    (this.conn as MYSQL.Connection).query(q, function (error, response) {
-                        if (error) {
-                            reject(error);
-                            return;
+            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, grp FROM ${COMPETENCE}  WHERE _id>0 AND conceptUri="${conceptUri}"`;
+            if (this.options.getTesting()) {
+                winston.info(q);
+                resolve(new Competence());
+            } else {
+                (this.conn as MYSQL.Connection).query(q, function (error, response) {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    let result: Competence = new Competence();
+                    let fields: string = "";
+                    if (response.length===1) {
+                        for (let key in response[0]) {
+                            let prop = response[0][key];
+                            if (prop)
+                                result[key as keyof Competence] = prop;
                         }
-                        let result: Competence = new Competence();
-                        let fields: string = "";
-                        if (response.length===1) {
-                            for (let key in response[0]) {
-                                let prop = response[0][key];
-                                if (prop)
-                                    result[key as keyof Competence] = prop;
-                            }
-                        }
-                        resolve(result);
-                    });
-                }
+                    }
+                    resolve(result);
+                });
+            }
         });
     }
 
@@ -228,6 +229,8 @@ export class Database {
                 let fields: string = "";
                 for (let key in competence) {
                     let prop = getProperty(competence,key as keyof Competence);
+                    if (typeof prop == "object")
+                        prop = (prop as object).toString();
                     if (prop !== undefined) {
                         if (fields!="") {
                             fields+=",";
@@ -239,9 +242,9 @@ export class Database {
                             fields += prop;
                     }
                 }
-                let q = `UPDATE ${COMPETENCE} SET ${fields} WHERE _id>0 AND conceptUri="${competence.get("conceptUri")}"`;
+                let q = `UPDATE ${COMPETENCE} SET ${fields} WHERE _id="${competence.get("_id")}" OR conceptUri="${competence.get("conceptUri")}"`;
+                winston.info(q);
                 if (this.options.getTesting()) {
-                    winston.info(q);
                     resolve();
                 } else {
                     (this.conn as MYSQL.Connection).query(q, function (error) {
@@ -255,15 +258,15 @@ export class Database {
 
     async execute(query: string) {
         return new Promise((resolve,reject) => {
-                if (this.options.getTesting()) {
-                    winston.info(query);
+            if (this.options.getTesting()) {
+                winston.info(query);
+                resolve();
+            } else {
+                (this.conn as MYSQL.Connection).query(query, function (error) {
+                    if (error) reject(error);
                     resolve();
-                } else {
-                    (this.conn as MYSQL.Connection).query(query, function (error) {
-                        if (error) reject(error);
-                        resolve();
-                    });
-                }
+                });
+            }
         });
     }
 }

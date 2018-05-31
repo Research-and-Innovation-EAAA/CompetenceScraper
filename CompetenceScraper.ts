@@ -81,7 +81,8 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
         }
 
         // Build default search string
-        let labels = competence.get("altLabels").split("/");
+        let altLabels = competence.get("altLabels");
+        let labels = altLabels?altLabels.split("/"):[];
         labels.unshift(competence.get("prefferredLabel"));
         let searchStr = "";
         let specialChars = "+*.()[]?";
