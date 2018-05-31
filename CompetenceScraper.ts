@@ -45,6 +45,8 @@ async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) 
 }
 
 async function scrapeRecursive(database: Database, page: puppeteer.Page) {
+
+
     // Query comptence uri from database
     let competencies = await database.loadCompetencies();
     console.log("Number of competencies: "+JSON.stringify(competencies.length));
@@ -52,29 +54,31 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
     //Scrape each Uri
     for (let index: number = 0 ; index<competencies.length ; index++) {
         let competence: Competence = competencies[index];
+
+        // Scrape labels
         let url = competence.get("conceptUri");
         //console.log(url);
-        if (!url)
-            continue;
-        await page.goto(url as string);
+        if (url) {
+            await page.goto(url as string);
 
-        // Scrape title and description
-        competence.set("name", await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`));
-        competence.set("prefferredLabel", competence.get("name"));
-        competence.set("description", await getText(page,`//*[@id="dataContainer"]/article/div/p[1]/text()`));
+            // Scrape title and description
+            competence.set("name", await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`));
+            competence.set("prefferredLabel", competence.get("name"));
+            competence.set("description", await getText(page,`//*[@id="dataContainer"]/article/div/p[1]/text()`));
 
-        // Scrape alternative labels
-        let altLabels = "";
-        let nameElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Alternativ betegnelse")]][1]/li/p/text()`);
-        for (let id: number = 0 ; id<nameElements.length ; id++) {
-            let txt = await page.evaluate(element => element.textContent, nameElements[id]);
-            if (txt) {
-                if (altLabels !== "")
-                    altLabels += "/";
-                altLabels += txt;
+            // Scrape alternative labels
+            let altLabels = "";
+            let nameElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Alternativ betegnelse")]][1]/li/p/text()`);
+            for (let id: number = 0 ; id<nameElements.length ; id++) {
+                let txt = await page.evaluate(element => element.textContent, nameElements[id]);
+                if (txt) {
+                    if (altLabels !== "")
+                        altLabels += "/";
+                    altLabels += txt;
+                }
             }
+            competence.set("altLabels", altLabels);
         }
-        competence.set("altLabels", altLabels);
 
         // Build default search string
         let labels = competence.get("altLabels").split("/");
@@ -100,9 +104,13 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
         // Update competence in database
         await database.updateCompetence(competence);
 
+        //Nothing to scrape
+        if (!url)
+            continue;
+
         // Scrape child competencies
         let urlElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/@onclick`);
-        nameElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/text()`);
+        let nameElements = await page.$x(`//*[@id="dataContainer"]/article/div/ul[preceding::h2[contains(., "Snævrere færdigheder/kompetencer")]][1]/li/a/text()`);
         for (let id: number = 0 ; id<urlElements.length ; id++) {
             let txt = await page.evaluate(element => element.textContent, urlElements[id]);
             let url = txt.match(/loadConcept\('(.*)'\).*/)[1];
