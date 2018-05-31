@@ -1,6 +1,6 @@
 import {Competence} from "./Competence";
 import * as MYSQL from "mysql";
-import winston from "winston";
+import * as winston from "winston";
 import {isObject} from "util";
 
 const COMPETENCE = "kompetence";
