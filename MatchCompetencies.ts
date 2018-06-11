@@ -5,8 +5,13 @@ import * as winston from "winston";
 
 async function matchCompetence(database: Database, competenceId: number, regular_exp: string) {
 
+    // Remove old matches
+    let query: string = `delete from annonce_kompetence` +
+        ` WHERE kompetence_id=${competenceId}`;
+    await database.execute(query);    
+
     // Add matches
-    let query: string = `insert ignore into annonce_kompetence (annonce_id, kompetence_id)` +
+    query = `insert ignore into annonce_kompetence (annonce_id, kompetence_id)` +
         ` SELECT a._id annonce_id, ${competenceId} kompetence_id FROM annonce a ` +
         ` WHERE a.searchable_body REGEXP "${regular_exp}"`;
     await database.execute(query);
