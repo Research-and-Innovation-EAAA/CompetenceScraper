@@ -118,13 +118,31 @@ export class Database {
         return this.options.about();
     };
 
+    getCount(query: string) : Promise<number> {
+        return new Promise((resolve,reject) => {
+            if (this.options.getTesting()) {
+                winston.info(query);
+                resolve(0);
+            } else {
+                (this.conn as MYSQL.Connection).query(query, function (error, response) {
+                    if (error) reject(error);
+	            let result : number= NaN;
+                    for (let key in response[0])
+                       result = response[0][key];
+                    resolve(result);
+                });
+            }
+        });
+    };
+
     loadCompetencies() : Promise<Competence[]> {
         return new Promise((resolve,reject) => {
             if (this.conn == undefined) {
                 reject(new Error("Not connected to database"));
                 return;
             }
-            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, defaultSearchPatterns, overriddenSearchPatterns, grp FROM ${COMPETENCE} `;
+            let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, defaultSearchPatterns, overriddenSearchPatterns, grp FROM ${COMPETENCE}`;
+            //let q = `SELECT _id, altLabels, conceptUri, description, name, prefferredLabel, kompetencecol, defaultSearchPatterns, overriddenSearchPatterns, grp FROM ${COMPETENCE} WHERE overriddenSearchPatterns is not null`;
             if (this.options.getTesting()) {
                 winston.info(q);
                 resolve([]);
