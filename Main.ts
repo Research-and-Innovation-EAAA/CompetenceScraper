@@ -12,7 +12,7 @@ async function main() {
         .setHost(process.env.MYSQL_HOST)
         .setPort(Number(process.env.MYSQL_PORT))
         .setDatabase(process.env.MYSQL_DATABASE)
-        .setUsername(process.env.MYSQL_USERNAME)
+        .setUsername(process.env.MYSQL_USER)
         .setPassword(process.env.MYSQL_PASSWORD));
     winston.info("Database: " + database.about());
     await database.connect();
