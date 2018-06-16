@@ -18,7 +18,7 @@ async function main() {
     await database.connect();
 
     // Scrape competencies
-    await scrape(database);
+    // await scrape(database);
 
     // Match competencies
     await matchCompetencies(database);

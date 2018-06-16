@@ -261,7 +261,6 @@ export class Database {
                     }
                 }
                 let q = `UPDATE ${COMPETENCE} SET ${fields} WHERE _id="${competence.get("_id")}" OR conceptUri="${competence.get("conceptUri")}"`;
-                winston.info(q);
                 if (this.options.getTesting()) {
                     resolve();
                 } else {

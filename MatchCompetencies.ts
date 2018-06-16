@@ -5,7 +5,7 @@ import * as winston from "winston";
 
 async function matchCompetence(database: Database, competenceId: number, regular_exp: string) {
 
-    let advertIdScope =         ` (select a1._id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=42694) is not false) `;
+    let advertIdScope =         ` (select a1._id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=${competenceId}) is not false) `;
     let competenceUpdate = ` (select true from kompetence k1 where k1._id=${competenceId} AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated)) `;
 
     // Guard on number of ads to match
