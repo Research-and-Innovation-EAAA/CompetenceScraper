@@ -5,8 +5,6 @@ import * as winston from "winston";
 
 async function matchCompetence(database: Database, competenceId: number, regular_exp: string) {
 
-    competenceId = 12550;
-
     let advertIdScope: string = ` select a1._id as _id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=${competenceId}) is not false UNION select a1._id as _id from annonce a1, kompetence k1 where k1._id=${competenceId} AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated) `;
     //let advertIdScope: string = ` select a1._id as _id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=165581) is not false UNION select a1._id from annonce a1, kompetence k1 where k1._id=165581 AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated) `;
 
@@ -25,8 +23,10 @@ async function matchCompetence(database: Database, competenceId: number, regular
     query = `SELECT 1 FROM ${tempTableName} LIMIT 1`;
     let countAds = await database.getCount(query);
     //winston.info(`Count ads for competence ${competenceId} => ${countAds}`);
-    if (countAds!=1)
-       return;    
+    if (countAds!=1) {
+        winston.info("Ignored match for competence id: ", competenceId);
+        return;
+    }
 
     // Remove old matches
     query = `delete FROM annonce_kompetence` +
@@ -44,6 +44,8 @@ async function matchCompetence(database: Database, competenceId: number, regular
     // Update match counter and time stamp
     query = "update kompetence set advertCount=(select count(*) from annonce_kompetence ak where ak.kompetence_id="+competenceId+"), lastMatch = CURRENT_TIMESTAMP() where kompetence._id="+competenceId;
     await database.execute(query);
+
+    winston.info("Finished match for competence id: ", competenceId);
 }
 
 export default async function matchCompetencies(database: Database) {
@@ -54,8 +56,8 @@ export default async function matchCompetencies(database: Database) {
 
 	// Match competence against adverts
 	let regular_exp : string = c.get("overriddenSearchPatterns")?c.get("overriddenSearchPatterns"):c.get("defaultSearchPatterns");
-        let id : number = c.get("_id")?competencies[i].get("_id") as number:NaN;
+        let id : number = c.get("_id")?c.get("_id") as number:NaN;
+        //if (id!=12550) continue;
         await matchCompetence(database, id, regular_exp);
-        winston.info("Finished match for competence id: ", id);
     }
 }
