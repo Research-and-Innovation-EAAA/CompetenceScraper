@@ -126,7 +126,7 @@ export class Database {
             } else {
                 (this.conn as MYSQL.Connection).query(query, function (error, response) {
                     if (error) reject(error);
-	            let result : number= NaN;
+	                let result : number = NaN;
                     for (let key in response[0])
                        result = response[0][key];
                     resolve(result);
