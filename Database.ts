@@ -2,6 +2,7 @@ import {Competence} from "./Competence";
 import * as MYSQL from "mysql";
 import * as winston from "winston";
 import {isObject} from "util";
+import {CompetenceHierarchy} from "./CompetenceHierarchy";
 
 const COMPETENCE = "kompetence";
 const COMPETENCE_CATEGORY = "kompetence_kategorisering";
@@ -285,6 +286,102 @@ export class Database {
                 });
             }
         });
+    }
+
+
+    async findSubCompetencies(competenceList: Array<CompetenceHierarchy>, trackList: Array<string>) { //IS RECURSIVE
+        return new Promise<Array<CompetenceHierarchy>>(async (resolve, reject) => {
+            if (this.conn == undefined) {
+                reject(new Error("Not connected to database"));
+                return;
+            }
+            let finalList: Array<CompetenceHierarchy> = [];
+            for (let i = 0; i < competenceList.length; i++) {
+                finalList[i] = new CompetenceHierarchy(competenceList[i].text);
+                finalList[i].children = await this.findSubCompetenciesHelper(competenceList[i].text, trackList);
+            }
+            resolve(finalList);
+        })
+    }
+
+    private async findSubCompetenciesHelper(superCompetence: string, trackList: Array<string>) {
+        return new Promise<Array<CompetenceHierarchy>>((resolve, reject) => {
+            let database = this;
+            const q = 'select k.prefferredLabel from kompetence k, kompetence_kategorisering kk where k.conceptUri = kk.subkompetence and kk.superkompetence = (select distinct k.conceptUri from kompetence k, kompetence_kategorisering kk where k.prefferredLabel = "' +  superCompetence + '" and k.conceptUri = kk.superkompetence)';
+            (this.conn as MYSQL.Connection).query(q,  function (error, response) {
+                if (error) {
+                    reject("Error in the recursive function findSubCompetencies: " + error);
+                    return;
+                }
+                let subCompetencies: CompetenceHierarchy[] = [];
+
+                if (response.length > 0) {
+                    let subList: Array<string> = [];
+                    for (let j = 0; j < response.length; j++) {
+                        if (response[j]) {
+                            subList.push(response[j].prefferredLabel);
+                        }
+                    }
+                    subList = subList.filter(function (el) {
+                        return trackList.indexOf(el) < 0;
+                    });
+                    let newTrackList = trackList;
+                    for (let subCompetence of subList) {
+                        newTrackList.push(subCompetence);
+                    }
+                    let searchList: Array<CompetenceHierarchy> = [];
+                    for (let competence of subList) {
+                        searchList.push(new CompetenceHierarchy(competence))
+                    }
+                    (database.findSubCompetencies(searchList, newTrackList)).then((children)=> {
+                        subCompetencies = children;
+                        resolve(subCompetencies);
+                    }, (failure) =>{
+                        reject(failure);
+                    })
+                }
+                else{
+                    resolve(subCompetencies);
+                }
+            })
+        })
+    }
+
+    storeShinyTreeJSON(JSON: string) {
+        return new Promise((resolve, reject) => {
+            let alreadyExists = false;
+            let database = this;
+            let q = 'select * from global';
+            (this.conn as MYSQL.Connection).query(q, function (error, response) {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (response.length > 0) {
+                    resolve(database.storeShinyTreeJSONHelper(JSON, true));
+                }
+                else{
+                    resolve(database.storeShinyTreeJSONHelper(JSON, false));
+                }
+            });
+
+        });
+    }
+
+    private storeShinyTreeJSONHelper(JSON: string, alreadyExists: boolean){
+        return new Promise((resolve, reject) => {
+            let query = '';
+            if (alreadyExists) {
+                query = 'update global set shinyTreeJSON = \'' + JSON + "\' where _id = 1";
+            }
+            else {
+                query = 'insert into global(shinyTreeJSON) values(\'' + JSON + '\')';
+            }
+            (this.conn as MYSQL.Connection).query(query, function (error) {
+                if (error) reject(error);
+                resolve();
+            });
+        })
     }
 }
 

@@ -3,7 +3,7 @@ import {Database, DatabaseOptions} from "./Database";
 import scrape from "./CompetenceScraper";
 import matchCompetencies from "./MatchCompetencies";
 import * as winston from "winston";
-
+import * as TreeGen from "./CompetenceJSONTreeGenerator";
 
 async function main() {
 
@@ -18,10 +18,12 @@ async function main() {
     await database.connect();
 
     // Scrape competencies
-    // await scrape(database);
+    await scrape(database);
 
     // Match competencies
     await matchCompetencies(database);
+
+    //await TreeGen.generateTree(database);
 
     database.disconnect();
 }
