@@ -18,10 +18,12 @@ async function main() {
     await database.connect();
 
     // Scrape competencies
-    await scrape(database);
+    if (process.env.COMPETENCIES_DONT_SCRAPE == undefined)
+        await scrape(database);
 
     // Match competencies
-    await matchCompetencies(database);
+    if (process.env.COMPETENCIES_DONT_MATCH == undefined)
+        await matchCompetencies(database);
 
     //await TreeGen.generateTree(database);
 
