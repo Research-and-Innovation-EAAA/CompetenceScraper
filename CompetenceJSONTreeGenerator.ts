@@ -10,7 +10,12 @@ export async function generateTree(database: Database){
     const groupedCompetencies: Array<string> = await database.findDistinctGroups();
     let tree = new CompetenceHierarchy("Alle kompetencer");
     for (let group of groupedCompetencies){
-        tree.children.push(new CompetenceHierarchy(group));
+        if (isNull(group)){
+            tree.children.push(new CompetenceHierarchy("NULL"));
+        }
+        else{
+            tree.children.push(new CompetenceHierarchy(group));
+        }
     }
 
     for (let competence of allCompetencies){
@@ -18,7 +23,7 @@ export async function generateTree(database: Database){
             if (competence.grp == tree.children[i].text){
                 tree.children[i].children.push(new CompetenceHierarchy(competence.prefferredLabel));
             }
-            else if (!competence.hasOwnProperty('grp') && isNull(tree.children[i].text)){
+            else if (!competence.hasOwnProperty('grp') && tree.children[i].text == "NULL"){
                 tree.children[i].children.push(new CompetenceHierarchy(competence.name));
             }
         }
