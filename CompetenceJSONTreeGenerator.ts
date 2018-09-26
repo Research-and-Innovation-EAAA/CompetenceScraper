@@ -2,75 +2,35 @@ import {Database} from "./Database";
 import {Competence} from "./Competence";
 import * as winston from "winston";
 import {CompetenceHierarchy} from "./CompetenceHierarchy";
+import {isNull} from "util";
 
 export async function generateTree(database: Database){
     let allCompetencies = await database.loadCompetencies();
 
-    const groupedCompetencies: Array<CompetenceHierarchy> = [
-        new CompetenceHierarchy("ict"),
-        new CompetenceHierarchy("language"),
-        new CompetenceHierarchy("transversal"),
-        new CompetenceHierarchy("Core"),
-        new CompetenceHierarchy("ict2"),
-        new CompetenceHierarchy("multimedie"),
-        new CompetenceHierarchy("GartnerForecast"),
-        new CompetenceHierarchy("undefined"),
-        new CompetenceHierarchy("_"),
-        new CompetenceHierarchy("NULL"),
-    ];
-    let treeList = groupedCompetencies;
+    const groupedCompetencies: Array<string> = await database.findDistinctGroups();
+    let tree = new CompetenceHierarchy("Alle kompetencer");
+    for (let group of groupedCompetencies){
+        tree.children.push(new CompetenceHierarchy(group));
+    }
 
     for (let competence of allCompetencies){
-        switch (competence.grp){
-            case "ict":{
-                groupedCompetencies[0].children.push(new CompetenceHierarchy(competence.name));
-                break;
+        for (let i = 0; i < tree.children.length; i++){
+            if (competence.grp == tree.children[i].text){
+                tree.children[i].children.push(new CompetenceHierarchy(competence.prefferredLabel));
             }
-            case "language":{
-                groupedCompetencies[1].children.push(new CompetenceHierarchy(competence.name));
-                break;
+            else if (!competence.hasOwnProperty('grp') && isNull(tree.children[i].text)){
+                tree.children[i].children.push(new CompetenceHierarchy(competence.name));
             }
-            case "transversal":{
-                groupedCompetencies[2].children.push(new CompetenceHierarchy(competence.name));
-                break;
-            }
-            case "Core":{
-                groupedCompetencies[3].children.push(new CompetenceHierarchy(competence.name));
-                break;
-            }
-            case "ict2":{
-                groupedCompetencies[4].children.push(new CompetenceHierarchy(competence.name));
-                break;
-            }
-            case "multimedie":{
-                groupedCompetencies[5].children.push(new CompetenceHierarchy(competence.name));
-                break;
-            }
-            case "GartnerForecast":{
-                groupedCompetencies[6].children.push(new CompetenceHierarchy(competence.name));
-                break;
-            }
-            case "undefined":{
-                groupedCompetencies[7].children.push(new CompetenceHierarchy(competence.name));
-                break;
-            }
-            case "":{ //Problem here, it doesn't find any with an empty string, the ones with an empty string for value seem to have the value missing instead, which in my program lumps them in with NULL
-                groupedCompetencies[8].children.push(new CompetenceHierarchy(competence.name));
-                break;
-            }
-        }
-        if (!competence.hasOwnProperty('grp')){ //Made separate due to the property not existing in the case of null, and the switch ALWAYS fell through to default despite there being breaks.
-            groupedCompetencies[9].children.push(new CompetenceHierarchy(competence.name));
         }
     }
 
     for (let i = 0; i < groupedCompetencies.length; i++){
-        treeList[i].children = await database.findSubCompetencies(groupedCompetencies[i].children, [])
+        tree.children[i].children = await database.findSubCompetencies(tree.children[i].children, [])
     }
-    treeList = removeLeaves(treeList);
-    //winston.info(JSON.stringify(treeList));
+    tree.children = removeLeaves(tree.children);
 
-    await database.storeShinyTreeJSON(JSON.stringify(treeList));
+    //winston.info(JSON.stringify(tree));
+    await database.storeShinyTreeJSON(JSON.stringify(tree));
 }
 
 function removeLeaves(competenceTree: Array<CompetenceHierarchy>){

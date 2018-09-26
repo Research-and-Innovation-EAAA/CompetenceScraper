@@ -3,7 +3,7 @@ import {Database, DatabaseOptions} from "./Database";
 import scrape from "./CompetenceScraper";
 import matchCompetencies from "./MatchCompetencies";
 import * as winston from "winston";
-import * as TreeGen from "./CompetenceJSONTreeGenerator";
+import {generateTree} from "./CompetenceJSONTreeGenerator"
 
 async function main() {
 
@@ -25,7 +25,8 @@ async function main() {
     if (process.env.COMPETENCIES_DONT_MATCH == undefined)
         await matchCompetencies(database);
 
-    //await TreeGen.generateTree(database);
+    //Generate JSON tree for R shinyTree
+    //await generateTree(database);
 
     database.disconnect();
 }
