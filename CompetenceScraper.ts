@@ -80,27 +80,6 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
             competence.set("altLabels", altLabels);
         }
 
-        // Build default search string
-        let altLabels = competence.get("altLabels");
-        let labels = altLabels?altLabels.split("/"):[];
-        labels.unshift(competence.get("prefferredLabel"));
-        let searchStr = "";
-        let specialChars = "%_#+*.()[]?";
-        labels.forEach((label) => {
-            if (label && label.length>0) {
-                if (searchStr.length>0)
-                    searchStr += "|";
-                if (!specialChars.includes(label[0]))
-                    searchStr += "[[:<:]]";
-                for (let i=0 ; i<label.length ; i++) {
-                    let char = label[i];
-                    searchStr += specialChars.includes(char)?"\\\\\\\\"+char:char;
-                }
-                if (!specialChars.includes(label[label.length-1]))
-                    searchStr += "[[:>:]]";
-            }
-        });
-        competence.set("defaultSearchPatterns", searchStr&&searchStr.length>0?searchStr:undefined);
 
         // Update competence in database
         await database.updateCompetence(competence);

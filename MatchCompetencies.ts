@@ -2,7 +2,6 @@ import {Competence} from "./Competence";
 import {Database, DatabaseOptions} from "./Database";
 import * as winston from "winston";
 
-
 async function matchCompetence(database: Database, competenceId: number, regular_exp: string) {
 
     let advertIdScope: string = ` select a1._id as _id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=${competenceId}) is not false UNION select a1._id as _id from annonce a1, kompetence k1 where k1._id=${competenceId} AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated) `;
@@ -45,19 +44,55 @@ async function matchCompetence(database: Database, competenceId: number, regular
     query = "update kompetence set advertCount=(select count(*) from annonce_kompetence ak where ak.kompetence_id="+competenceId+"), lastMatch = CURRENT_TIMESTAMP() where kompetence._id="+competenceId;
     await database.execute(query);
 
-    winston.info("Finished match for competence id: ", competenceId);
+    winston.info(`Finished match ´${regular_exp}´ for competence id: `, competenceId);
 }
 
-export default async function matchCompetencies(database: Database) {
+async function buildSearchPattern(database: Database, competence: Competence) : string {
+    // Build default search string
+    let altLabels = competence.get("altLabels");
+    let labels = altLabels?altLabels.split("/"):[];
+    labels.unshift(competence.get("prefferredLabel"));
+    let searchStr = "";
+    let specialChars = "%_#+*.()[]?";
+    labels.forEach((label) => {
+        if (label && label.length>0) {
+            if (searchStr.length>0)
+                searchStr += "|";
+            if (!specialChars.includes(label[0]))
+                searchStr += "[[:<:]]";
+            for (let i=0 ; i<label.length ; i++) {
+                let char = label[i];
+                searchStr += specialChars.includes(char)?"\\\\\\\\"+char:char;
+            }
+            if (!specialChars.includes(label[label.length-1]))
+                searchStr += "[[:>:]]";
+        }
+    });
+    if (labels.length>1)
+        searchStr = "("+searchStr+")";
+    searchStr = "(?i)"+searchStr;
+    if (competence.get("defaultSearchPatterns") != searchStr) {
+        competence.set("defaultSearchPatterns", searchStr&&searchStr.length>0?searchStr:undefined);
+        await database.updateCompetence(competence);
+    }
+
+    // return RegExp to use
+    let overrideRegExp =  competence.get("overriddenSearchPatterns");
+    return overrideRegExp?overrideRegExp:searchStr;
+}
+
+export default async function matchCompetencies(database: Database, competenceId: number) {
     let competencies = await database.loadCompetencies();
 
     for (let i=0 ; i<competencies.length ; i++) {
         let c = competencies[i];
 
-	// Match competence against adverts
-	let regular_exp : string = c.get("overriddenSearchPatterns")?c.get("overriddenSearchPatterns"):c.get("defaultSearchPatterns");
+        // Match competence against adverts
         let id : number = c.get("_id")?c.get("_id") as number:NaN;
-        //if (id!=12550) continue;
+        if (id!=165649) continue;
+
+        // get regular expression
+        let regular_exp : string = await buildSearchPattern(database, c);
         await matchCompetence(database, id, regular_exp);
     }
 }

@@ -5,6 +5,9 @@ import matchCompetencies from "./MatchCompetencies";
 import * as winston from "winston";
 import * as TreeGen from "./CompetenceJSONTreeGenerator";
 
+type truthy = "YES" | "Y" | "1" | "true" | "True" | "TRUE";
+type falsy = "NO" | "N" | "0" | "false" | "False" | "FALSE";
+
 async function main() {
 
     // Setup database
@@ -18,11 +21,11 @@ async function main() {
     await database.connect();
 
     // Scrape competencies
-    if (process.env.COMPETENCIES_DONT_SCRAPE == undefined)
+    if (!<falsy>process.env.COMPETENCIES_SCRAPE)
         await scrape(database);
 
     // Match competencies
-    if (process.env.COMPETENCIES_DONT_MATCH == undefined)
+    if (!<falsy>process.env.COMPETENCIES_MATCH)
         await matchCompetencies(database);
 
     //await TreeGen.generateTree(database);
