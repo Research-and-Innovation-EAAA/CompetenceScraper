@@ -74,6 +74,7 @@ async function buildSearchPattern(database: Database, competence: Competence) : 
         searchStr = "("+searchStr+")";
     // TODO: Uncomment for case insensitivity -> searchStr = "(?i)"+searchStr;
     if (competence.get("defaultSearchPatterns") != searchStr) {
+        searchStr = "(?i)"+searchStr;
         competence.set("defaultSearchPatterns", searchStr&&searchStr.length>0?searchStr:undefined);
         await database.updateCompetence(competence);
     }
