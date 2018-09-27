@@ -21,15 +21,16 @@ async function main() {
     await database.connect();
 
     // Scrape competencies
-    if (!<falsy>process.env.COMPETENCIES_SCRAPE)
+    if (!<falsy>process.env.COMPETENCIES_SCRAPE) {
         await scrape(database);
+
+        //Generate JSON tree for R shinyTree
+        //await generateTree(database);
+    }
 
     // Match competencies
     if (!<falsy>process.env.COMPETENCIES_MATCH)
         await matchCompetencies(database);
-
-    //Generate JSON tree for R shinyTree
-    //await generateTree(database);
 
     database.disconnect();
 }
