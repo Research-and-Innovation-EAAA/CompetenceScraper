@@ -288,6 +288,31 @@ export class Database {
         });
     }
 
+    async findDistinctGroups(){
+        return new Promise<Array<string>>((resolve, reject) => {
+            const query = 'select distinct grp from kompetence';
+            (this.conn as MYSQL.Connection).query(query,  function (error, response) {
+                if (error){
+                    reject(error)
+                }
+                else{
+                    if (response.length > 0){
+                        let groupList = new Array<string>();
+                        for (let j = 0; j < response.length; j++) {
+                            if (response[j]) {
+                                groupList.push(response[j].grp);
+                            }
+                        }
+                        resolve(groupList);
+                    }
+                    else{
+                        reject(new Error("No groups were found in findDistinctGroups"));
+                    }
+                }
+            })
+        })
+    }
+
 
     async findSubCompetencies(competenceList: Array<CompetenceHierarchy>, trackList: Array<string>) { //IS RECURSIVE
         return new Promise<Array<CompetenceHierarchy>>(async (resolve, reject) => {
@@ -307,10 +332,10 @@ export class Database {
     private async findSubCompetenciesHelper(superCompetence: string, trackList: Array<string>) {
         return new Promise<Array<CompetenceHierarchy>>((resolve, reject) => {
             let database = this;
-            const q = 'select k.prefferredLabel from kompetence k, kompetence_kategorisering kk where k.conceptUri = kk.subkompetence and kk.superkompetence = (select distinct k.conceptUri from kompetence k, kompetence_kategorisering kk where k.prefferredLabel = "' +  superCompetence + '" and k.conceptUri = kk.superkompetence)';
-            (this.conn as MYSQL.Connection).query(q,  function (error, response) {
+            const query = 'select k.prefferredLabel from kompetence k, kompetence_kategorisering kk where k.conceptUri = kk.subkompetence and kk.superkompetence = (select distinct k.conceptUri from kompetence k, kompetence_kategorisering kk where k.prefferredLabel = "' +  superCompetence + '" and k.conceptUri = kk.superkompetence)';
+            (this.conn as MYSQL.Connection).query(query,  function (error, response) {
                 if (error) {
-                    reject("Error in the recursive function findSubCompetencies: " + error);
+                    reject("Error in the recursive function findSubCompetencies:\n" + error);
                     return;
                 }
                 let subCompetencies: CompetenceHierarchy[] = [];
