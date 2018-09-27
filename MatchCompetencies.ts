@@ -47,7 +47,7 @@ async function matchCompetence(database: Database, competenceId: number, regular
     winston.info(`Finished match ´${regular_exp}´ for competence id: `, competenceId);
 }
 
-async function buildSearchPattern(database: Database, competence: Competence) : string {
+async function buildSearchPattern(database: Database, competence: Competence) : Promise<string> {
     // Build default search string
     let altLabels = competence.get("altLabels");
     let labels = altLabels?altLabels.split("/"):[];
@@ -81,7 +81,7 @@ async function buildSearchPattern(database: Database, competence: Competence) : 
     return overrideRegExp?overrideRegExp:searchStr;
 }
 
-export default async function matchCompetencies(database: Database, competenceId: number) {
+export default async function matchCompetencies(database: Database) {
     let competencies = await database.loadCompetencies();
 
     for (let i=0 ; i<competencies.length ; i++) {
