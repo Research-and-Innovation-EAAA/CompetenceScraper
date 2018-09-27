@@ -89,7 +89,7 @@ export default async function matchCompetencies(database: Database) {
 
         // Match competence against adverts
         let id : number = c.get("_id")?c.get("_id") as number:NaN;
-        if (id!=165649) continue;
+        //if (id!=165649) continue;
 
         // get regular expression
         let regular_exp : string = await buildSearchPattern(database, c);
