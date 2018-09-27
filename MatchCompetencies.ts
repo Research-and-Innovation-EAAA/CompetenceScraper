@@ -4,6 +4,8 @@ import * as winston from "winston";
 
 async function matchCompetence(database: Database, competenceId: number, regular_exp: string) {
 
+    winston.info(`Match ´${regular_exp}´ for competence id: `, competenceId);
+
     let advertIdScope: string = ` select a1._id as _id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=${competenceId}) is not false UNION select a1._id as _id from annonce a1, kompetence k1 where k1._id=${competenceId} AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated) `;
     //let advertIdScope: string = ` select a1._id as _id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=165581) is not false UNION select a1._id from annonce a1, kompetence k1 where k1._id=165581 AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated) `;
 
@@ -44,7 +46,7 @@ async function matchCompetence(database: Database, competenceId: number, regular
     query = "update kompetence set advertCount=(select count(*) from annonce_kompetence ak where ak.kompetence_id="+competenceId+"), lastMatch = CURRENT_TIMESTAMP() where kompetence._id="+competenceId;
     await database.execute(query);
 
-    winston.info(`Finished match ´${regular_exp}´ for competence id: `, competenceId);
+    winston.info("Finished match for competence id: ", competenceId);
 }
 
 async function buildSearchPattern(database: Database, competence: Competence) : Promise<string> {
@@ -70,7 +72,7 @@ async function buildSearchPattern(database: Database, competence: Competence) : 
     });
     if (labels.length>1)
         searchStr = "("+searchStr+")";
-    searchStr = "(?i)"+searchStr;
+    // TODO: Uncomment for case insensitivity -> searchStr = "(?i)"+searchStr;
     if (competence.get("defaultSearchPatterns") != searchStr) {
         competence.set("defaultSearchPatterns", searchStr&&searchStr.length>0?searchStr:undefined);
         await database.updateCompetence(competence);
