@@ -92,13 +92,14 @@ export default async function matchCompetencies(database: Database) {
         //if (id!=165649) continue;
 
         // get regular expression
-        let regular_exp : string = await buildSearchPattern(database, c).catch((err)=>{
-            winston.info(`Failed building search pattern for competence ${id}`);
-        });
-        await matchCompetence(database, id, regular_exp).then(()=>{
-            winston.info(`Finished match for competence ${id}`);
+	await buildSearchPattern(database, c).then(async (regular_exp)=>{
+	        await matchCompetence(database, id, regular_exp).then(()=>{
+        	    winston.info(`Finished match for competence ${id}`);
+		}).catch((err)=>{
+		    winston.info(`Failed match with "${err}" for competence ${id}`);
+	        });
         }).catch((err)=>{
-            winston.info(`Failed match with "${error}" for competence ${id}`);
+            winston.info(`Failed building search pattern for competence ${id}`);
         });
     }
 }
