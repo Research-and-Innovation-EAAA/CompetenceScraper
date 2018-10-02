@@ -45,8 +45,6 @@ async function matchCompetence(database: Database, competenceId: number, regular
     // Update match counter and time stamp
     query = "update kompetence set advertCount=(select count(*) from annonce_kompetence ak where ak.kompetence_id="+competenceId+"), lastMatch = CURRENT_TIMESTAMP() where kompetence._id="+competenceId;
     await database.execute(query);
-
-    winston.info("Finished match for competence id: ", competenceId);
 }
 
 async function buildSearchPattern(database: Database, competence: Competence) : Promise<string> {
@@ -95,6 +93,10 @@ export default async function matchCompetencies(database: Database) {
 
         // get regular expression
         let regular_exp : string = await buildSearchPattern(database, c);
-        await matchCompetence(database, id, regular_exp);
+        await matchCompetence(database, id, regular_exp).then(()=>{
+            winston.info("Finished match for competence id: ", id);
+        }).catch((err)=>{
+            winston.info("Failed match for competence id: ", id);
+        });
     }
 }
