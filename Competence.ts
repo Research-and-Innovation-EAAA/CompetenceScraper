@@ -6,6 +6,7 @@ class ICompetence {
     name: string | undefined;
     prefferredLabel: string | undefined;
     defaultSearchPatterns: string | undefined;
+    lastMatch: string | undefined; // date time string format from MySQL
     overriddenSearchPatterns: string | undefined;
     grp: string | undefined;
 }

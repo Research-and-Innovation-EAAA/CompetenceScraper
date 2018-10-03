@@ -83,13 +83,33 @@ async function buildSearchPattern(database: Database, competence: Competence) : 
 
 export default async function matchCompetencies(database: Database) {
     let competencies = await database.loadCompetencies();
+    competencies.sort((c1,c2)=> {
+        let c1datestr : string | undefined = c1.get("lastMatch");
+        let c2datestr : string | undefined = c2.get("lastMatch");
+        if (c1datestr === undefined && c2datestr === undefined)
+            return 0;
+        else if (c1datestr === undefined)
+            return -1;
+        else if (c2datestr === undefined)
+            return 1;
+        else {
+            let c1date : number = new Date(c1datestr).getTime();
+            let c2date : number = new Date(c2datestr).getTime();
+            if (c1date < c2date)
+                return -1;
+            else if (c1date > c2date)
+                return 1;
+            else
+                return 0;
+        }
+    });
 
     for (let i=0 ; i<competencies.length ; i++) {
         let c = competencies[i];
 
         // Match competence against adverts
         let id : number = c.get("_id")?c.get("_id") as number:NaN;
-        //if (id!=165649) continue;
+        //if (c.get("defaultSearchPatterns") !== undefined) continue;
 
         // get regular expression
 	await buildSearchPattern(database, c).then(async (regular_exp)=>{
