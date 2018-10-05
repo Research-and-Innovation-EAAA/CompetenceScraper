@@ -93,14 +93,24 @@ export default async function matchCompetencies(database: Database) {
         else if (c2datestr === undefined)
             return 1;
         else {
-            let c1date : number = new Date(c1datestr).getTime();
-            let c2date : number = new Date(c2datestr).getTime();
-            if (c1date < c2date)
-                return -1;
-            else if (c1date > c2date)
-                return 1;
-            else
+            let c1matchdate : number = new Date(c1datestr).getTime();
+            let c2matchdate : number = new Date(c2datestr).getTime();
+            let c1updatedate : number = new Date(c1.get("lastUpdated")).getTime();
+            let c2updatedate : number = new Date(c2.get("lastUpdated")).getTime();
+            if (c1matchdate < c1updatedate  && c2matchdate < c2matchdate)
                 return 0;
+            else if (c1matchdate < c1updatedate)
+                return -1;
+            else if (c2matchdate < c2updatedate)
+                return 1;
+            else {
+                if (c1matchdate < c2matchdate)
+                    return -1;
+                else if (c1matchdate > c2matchdate)
+                    return 1;
+                else
+                    return 0;
+            }
         }
     });
 
