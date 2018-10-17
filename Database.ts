@@ -151,12 +151,11 @@ export class Database {
                 (this.conn as MYSQL.Connection).query(q, function (error, response) {
                     if (error) reject(error);
                     let result: Array<Competence> = [];
-                    let fields: string = "";
                     for (let i=0 ; i<response.length ; i++) {
                         result[i] = new Competence();
                         for (let key in response[i]) {
                             let prop = response[i][key];
-                            if (prop)
+                            if (prop !== null && prop !== undefined)
                                 result[i][key as keyof Competence] = prop;
                         }
                     }
