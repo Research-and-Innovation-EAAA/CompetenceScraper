@@ -4,6 +4,7 @@ class ICompetence {
     conceptUri: string | undefined;
     description: string | undefined;
     name: string | undefined;
+    advertCount: number | undefined;
     prefferredLabel: string | undefined;
     defaultSearchPatterns: string | undefined;
     lastMatch: string | undefined; // date time string format from MySQL
