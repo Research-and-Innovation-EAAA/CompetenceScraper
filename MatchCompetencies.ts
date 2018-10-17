@@ -4,8 +4,6 @@ import * as winston from "winston";
 
 async function matchCompetence(database: Database, competenceId: number, regular_exp: string) {
 
-    winston.info(`Match ´${regular_exp}´ for competence id: `, competenceId);
-
     let advertIdScope: string = ` select a1._id as _id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=${competenceId}) is not false UNION select a1._id as _id from annonce a1, kompetence k1 where k1._id=${competenceId} AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated) `;
     //let advertIdScope: string = ` select a1._id as _id from annonce a1 where a1.lastSearchableBody >  (select k.lastMatch from kompetence k where k._id=165581) is not false UNION select a1._id from annonce a1, kompetence k1 where k1._id=165581 AND (k1.lastMatch is null OR k1.lastMatch<k1.lastUpdated) `;
 
@@ -157,6 +155,8 @@ export default async function matchCompetencies(database: Database) {
 
         // get regular expression
         await buildSearchPattern(database, c).then(async (regular_exp)=>{
+            winston.info(`Match "${regular_exp}" for competence ${id}`);
+
             await matchCompetence(database, id, regular_exp).then(()=>{
                 winston.info(`Finished match for competence ${id}`);
             }).catch((err)=>{
