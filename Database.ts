@@ -248,7 +248,10 @@ export class Database {
                 for (let key in competence) {
                     let prop = getProperty(competence,key as keyof Competence);
                     if (typeof prop == "object")
-                        prop = (prop as object).toString();
+                        if (prop instanceof Date)
+                            prop = (prop as Date).toISOString();
+                        else
+                            prop = (prop as object).toString();
                     if (prop !== undefined) {
                         if (fields!="") {
                             fields+=",";
@@ -261,6 +264,7 @@ export class Database {
                     }
                 }
                 let q = `UPDATE ${COMPETENCE} SET ${fields} WHERE _id="${competence.get("_id")}" OR conceptUri="${competence.get("conceptUri")}"`;
+                winston.info(`Update query: ${q}`);
                 if (this.options.getTesting()) {
                     resolve();
                 } else {

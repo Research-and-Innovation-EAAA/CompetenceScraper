@@ -7,8 +7,8 @@ class ICompetence {
     advertCount: number | undefined;
     prefferredLabel: string | undefined;
     defaultSearchPatterns: string | undefined;
-    lastMatch: string | undefined; // date time string format from MySQL
-    lastUpdated: string | undefined; // date time string format from MySQL
+    lastMatch: Date | undefined;
+    lastUpdated: Date | undefined;
     overriddenSearchPatterns: string | undefined;
     grp: string | undefined;
 }

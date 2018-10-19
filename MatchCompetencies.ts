@@ -19,10 +19,10 @@ async function matchCompetence(database: Database, competenceId: number, regular
     await database.execute(query);
 
     // Return if no ad needs to be matched
-    query = `SELECT 1 FROM ${tempTableName} LIMIT 1`;
+    query = `SELECT count(*) FROM ${tempTableName} LIMIT 1`;
     let countAds = await database.getCount(query);
-    //winston.info(`Count ads for competence ${competenceId} => ${countAds}`);
-    if (countAds!=1) {
+    winston.info(`Count ads for competence ${competenceId} => ${countAds}`);
+    if (countAds<1) {
         winston.info("Ignored match for competence id: ", competenceId);
         return;
     }
@@ -109,29 +109,27 @@ export default async function matchCompetencies(database: Database) {
         else if (c2count === undefined)
             return 1;
         else {
-            let c1dateStr: string | undefined = c1.get("lastMatch");
-            let c2dateStr: string | undefined = c2.get("lastMatch");
-            if (c1dateStr === undefined && c2dateStr === undefined)
+            let c1match: Date | undefined = c1.get("lastMatch");
+            let c2match: Date | undefined = c2.get("lastMatch");
+            if (c1match === c2match)
                 return 0;
-            else if (c1dateStr === undefined)
+            else if (c1match === undefined)
                 return -1;
-            else if (c2dateStr === undefined)
+            else if (c2match === undefined)
                 return 1;
             else {
-                let c1matchdate: number = new Date(c1dateStr).getTime();
-                let c2matchdate: number = new Date(c2dateStr).getTime();
-                let c1updatedate: number = new Date(c1.get("lastUpdated")).getTime();
-                let c2updatedate: number = new Date(c2.get("lastUpdated")).getTime();
-                if (c1matchdate < c1updatedate && c2matchdate < c2matchdate)
+                let c1update: Date | undefined = c1.get("lastUpdated");
+                let c2update: Date | undefined = c1.get("lastUpdated");
+                if (c1match < c1update && c2match < c2update)
                     return 0;
-                else if (c1matchdate < c1updatedate)
+                else if (c1match < c1update)
                     return -1;
-                else if (c2matchdate < c2updatedate)
+                else if (c2match < c2update)
                     return 1;
                 else {
-                    if (c1matchdate < c2matchdate)
+                    if (c1match < c2match)
                         return -1;
-                    else if (c1matchdate > c2matchdate)
+                    else if (c1match > c2match)
                         return 1;
                     else
                         return 0;
