@@ -21,7 +21,7 @@ async function main() {
     winston.info("Database: " + database.about());
     await database.connect();
 
-    
+
     // Scrape competencies
     if (!<falsy>process.env.COMPETENCIES_SCRAPE) {
         await scrape(database);
@@ -34,8 +34,10 @@ async function main() {
     if (!<falsy>process.env.COMPETENCIES_MATCH)
         await matchCompetencies(database);
 
+    // Dictionary Gen for Machine Learning
+    if (!<falsy>process.env.DICTIONARY_GEN)
+        await convertAdvertToNumbers(database);
 
-    await convertAdvertToNumbers(database);
 
     database.disconnect();
 }

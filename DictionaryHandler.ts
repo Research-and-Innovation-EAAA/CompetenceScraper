@@ -8,7 +8,7 @@ import {Database} from "./Database";
 
 
 export async function convertAdvertToNumbers(database: Database){
-    let data = (await database.loadAdvertTextsNoNumberFormat(1, 1000)) as {_id: number, searchable_body: string}[];
+    let data = (await database.loadAdvertTextsNoNumberFormat(1, 1000000)) as {_id: number, searchable_body: string}[];
 
     let dataSize = data.length;
 
