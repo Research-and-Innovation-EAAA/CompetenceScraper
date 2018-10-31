@@ -1,5 +1,4 @@
 import {Database} from "./Database";
-import {Competence} from "./Competence";
 import * as winston from "winston";
 import {CompetenceHierarchy} from "./CompetenceHierarchy";
 import {isNull} from "util";

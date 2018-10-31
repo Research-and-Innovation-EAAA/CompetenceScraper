@@ -3,7 +3,8 @@ import {Database, DatabaseOptions} from "./Database";
 import scrape from "./CompetenceScraper";
 import matchCompetencies from "./MatchCompetencies";
 import * as winston from "winston";
-import {generateTree} from "./CompetenceJSONTreeGenerator"
+import {generateTree} from "./CompetenceJSONTreeGenerator";
+import {convertAdvertToNumbers} from "./DictionaryHandler";
 
 type truthy = "YES" | "Y" | "1" | "true" | "True" | "TRUE";
 type falsy = "NO" | "N" | "0" | "false" | "False" | "FALSE";
@@ -20,6 +21,7 @@ async function main() {
     winston.info("Database: " + database.about());
     await database.connect();
 
+    
     // Scrape competencies
     if (!<falsy>process.env.COMPETENCIES_SCRAPE) {
         await scrape(database);
@@ -31,6 +33,9 @@ async function main() {
     // Match competencies
     if (!<falsy>process.env.COMPETENCIES_MATCH)
         await matchCompetencies(database);
+
+
+    await convertAdvertToNumbers(database);
 
     database.disconnect();
 }

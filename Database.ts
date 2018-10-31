@@ -411,5 +411,54 @@ export class Database {
             });
         })
     }
+
+    async loadAdvertTextsNoNumberFormat(idStart: number, idEnd: number){
+        return new Promise((resolve, reject) => {
+            let query = 'select _id, searchable_body from annonce where _id >= ' + idStart + ' and _id <= ' + idEnd + ' and numberFormat_body is NULL';
+            (this.conn as MYSQL.Connection).query(query, function(error, response){
+                if (error) reject(error);
+                else{
+                    if (response.length > 0){
+                        resolve(response);
+                    }
+                }
+            })
+        })
+    }
+
+    async checkDictionaryWord(word: string){
+        return new Promise((resolve, reject) => {
+            let query = 'select _id from machine_word_dictionary where word = "' + word + '"';
+            let database = this;
+            (this.conn as MYSQL.Connection).query(query, function(error, response){
+                if (error) reject("Failed to select _id in dictionary" + error);
+                else{
+                    if (response.length > 0){
+                        resolve(response);
+                    }
+                    else{
+                        let q2 = 'insert into machine_word_dictionary(word) values("' + word + '")';
+                        (database.conn as MYSQL.Connection).query(q2, function(error, response){
+                            if (error) reject(error);
+                            else{
+                                (database.conn as MYSQL.Connection).query(query, function(error, response){
+                                    if (error) reject(error);
+                                    else{
+                                        if (response.length > 0){
+                                            resolve(response);
+                                        }
+                                        else{
+                                            reject("ERROR: FAILED TO INSERT NEW WORD INTO DICTIONARY")
+                                        }
+                                    }
+                                })
+                            }
+                        })
+                    }
+                }
+            })
+        })
+    }
+
 }
 
