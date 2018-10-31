@@ -39,6 +39,7 @@ async function main() {
         await convertAdvertToNumbers(database);
 
 
+
     database.disconnect();
 }
 

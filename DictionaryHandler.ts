@@ -8,14 +8,20 @@ import {Database} from "./Database";
 
 
 export async function convertAdvertToNumbers(database: Database){
-    let data = (await database.loadAdvertTextsNoNumberFormat(1, 1000000)) as {_id: number, searchable_body: string}[];
 
-    let dataSize = data.length;
+    let dataSize = ((await database.findTopAdvertId()) as {amount: number}[])[0].amount;
 
-    for (let i = 0; i < data.length; i++){
-        let n = i + 1;
-        console.log("Progress: " + n + " of " + dataSize);
-        await convertToNumbers(data[i], database)
+    console.log(dataSize);
+
+    for (let i = 1; i <= dataSize; i++){
+        console.log("Progress: " + i + " of " + dataSize);
+
+        let data = ((await database.loadAdvertTextNoNumberFormat(i)) as {_id: number, searchable_body: string}[]);
+
+        if (data.length > 0){
+            await convertToNumbers(data[0], database)
+        }
+
     }
 }
 

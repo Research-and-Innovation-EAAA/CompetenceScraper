@@ -412,15 +412,27 @@ export class Database {
         })
     }
 
-    async loadAdvertTextsNoNumberFormat(idStart: number, idEnd: number){
+    async findTopAdvertId(){
         return new Promise((resolve, reject) => {
-            let query = 'select _id, searchable_body from annonce where _id >= ' + idStart + ' and _id <= ' + idEnd + ' and numberFormat_body is NULL';
+            let query = 'select max(_id) as amount from annonce';
             (this.conn as MYSQL.Connection).query(query, function(error, response){
                 if (error) reject(error);
                 else{
                     if (response.length > 0){
                         resolve(response);
                     }
+                }
+            })
+        })
+    }
+
+    async loadAdvertTextNoNumberFormat(_id: number){
+        return new Promise((resolve, reject) => {
+            let query = 'select _id, searchable_body from annonce where _id = ' + _id + ' and numberFormat_body is NULL';
+            (this.conn as MYSQL.Connection).query(query, function(error, response){
+                if (error) reject(error);
+                else{
+                    resolve(response);
                 }
             })
         })
