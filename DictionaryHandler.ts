@@ -27,7 +27,7 @@ export async function convertAdvertToNumbers(database: Database){
 
 async function convertToNumbers(advertData: {_id: number, searchable_body: string}, database: Database){
     let wordArray: string[];
-    wordArray = advertData.searchable_body.split(/[0123456789$%+=◾◦●▾▼▸▪■│─√∙→←€″„‘–‐·˚¾½¼»²±°­¬«©¨§¤£✅¢×'’@ .:;—?!_~,`"“•›·…”*&|()<>{}®´ \[\]\r\n/\\\-]+/);
+    wordArray = advertData.searchable_body.split(/[0123456789$%+=◾◦●▾▼▸▪■│─√∙→←€″„‘–‐·˚¾½¼»²±°­¬«©❤✩✖✕✔✓✉✅☏☎¨§¤£¢×'’@ .:;—?!_~,`"“•›·…”*&|()<>{}®´ \[\]\r\n/\\\-]+/);
     wordArray = wordArray.filter(Boolean);
 
     let numberArray: number[] = new Array(wordArray.length);
