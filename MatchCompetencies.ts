@@ -138,31 +138,27 @@ export default async function matchCompetencies(database: Database) {
         }
     });
 
-    // Output match priority
+    // Match all competencies against missing ads
     for (let i=0 ; i<competencies.length ; i++) {
         let c = competencies[i];
+        if (!c) continue;
         let id: number = c.get("_id") ? c.get("_id") as number : NaN;
+        if (!id) continue;
+
+        // Output match priority
         winston.info(`Priority=${i}, id=${id}`);
-    }
-
-    for (let i=0 ; i<competencies.length ; i++) {
-        let c = competencies[i];
-
-        // Match competence against adverts
-        let id : number = c.get("_id")?c.get("_id") as number:NaN;
 
         // get regular expression
-        let regular_exp = await buildSearchPattern(database, c).catch((err)=>{
+        let regular_exp = await (buildSearchPattern(database, c).catch((err)=>{
             winston.info(`Failed building search pattern for competence ${id} : ${err}`);
-        });
+        }));
+        if (! regular_exp) continue;
 
         // match regular expression
-        if (regular_exp) {
-            await matchCompetence(database, id, regular_exp).then(()=>{
-                winston.info(`Finished match for competence ${id}`);
-            }).catch((err)=>{
-                winston.info(`Failed match for competence ${id} : "${err}"`);
-            });
-        }
+        await (matchCompetence(database, id, regular_exp).then(()=>{
+            winston.info(`Finished match for competence ${id}`);
+        }).catch((err)=>{
+            winston.info(`Failed match for competence ${id} : "${err}"`);
+        }));
     }
 }
