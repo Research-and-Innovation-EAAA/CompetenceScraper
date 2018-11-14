@@ -20,9 +20,9 @@ async function matchCompetence(database: Database, competenceId: number, regular
 
     // Return if no ad needs to be matched
     query = `SELECT count(*) FROM ${tempTableName} LIMIT 1`;
-    let countAds = await database.getCount(query);
-    winston.info(`Count ads for competence ${competenceId} => ${countAds}`);
-    if (countAds<1) {
+    let scopeAds = await database.getCount(query);
+    winston.info(`Competence ${competenceId} miss to search ${scopeAds} ads`);
+    if (scopeAds<1) {
         winston.info("Ignored match for competence id: ", competenceId);
         return;
     }
@@ -152,16 +152,17 @@ export default async function matchCompetencies(database: Database) {
         let id : number = c.get("_id")?c.get("_id") as number:NaN;
 
         // get regular expression
-        await buildSearchPattern(database, c).then(async (regular_exp)=>{
-            winston.info(`Match "${regular_exp}" for competence ${id}`);
+        let regular_exp = await buildSearchPattern(database, c).catch((err)=>{
+            winston.info(`Failed building search pattern for competence ${id} : ${err}`);
+        });
 
+        // match regular expression
+        if (regular_exp) {
             await matchCompetence(database, id, regular_exp).then(()=>{
                 winston.info(`Finished match for competence ${id}`);
             }).catch((err)=>{
                 winston.info(`Failed match for competence ${id} : "${err}"`);
             });
-        }).catch((err)=>{
-            winston.info(`Failed building search pattern for competence ${id} : ${err}`);
-        });
+        }
     }
 }
