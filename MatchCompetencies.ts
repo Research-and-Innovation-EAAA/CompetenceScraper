@@ -52,7 +52,7 @@ async function matchCompetence(database: Database, competenceId: number, regular
 async function buildSearchPattern(database: Database, competence: Competence) : Promise<string> {
     // Build default search string
     let altLabels = competence.get("altLabels");
-    let labels = altLabels?altLabels.split("/"):[];
+    let labels = typeof altLabels==='string' && altLabels?altLabels.split("/"):[];
     labels.unshift(competence.get("prefferredLabel"));
     let searchStr = "";
     let searchQuickStr = "";
@@ -86,14 +86,14 @@ async function buildSearchPattern(database: Database, competence: Competence) : 
     }
     searchStr = "(?i)"+searchStr;
     searchQuickStr = "(?i)[[:<:]]"+searchQuickStr+"[[:>:]]";
-    let defaultSearchStr = anyOmittedWordEnds?searchStr:searchQuickStr;
+    let defaultSearchStr : string = anyOmittedWordEnds?searchStr:searchQuickStr;
     if (competence.get("defaultSearchPatterns") != defaultSearchStr) {
         competence.set("defaultSearchPatterns", defaultSearchStr&&defaultSearchStr.length>0?defaultSearchStr:undefined);
         await database.updateCompetence(competence);
     }
 
     // return RegExp to use
-    let overrideRegExp =  competence.get("overriddenSearchPatterns");
+    let overrideRegExp : string =  competence.get("overriddenSearchPatterns");
     return overrideRegExp?overrideRegExp:defaultSearchStr;
 }
 
@@ -152,7 +152,9 @@ export default async function matchCompetencies(database: Database) {
         let regular_exp = await (buildSearchPattern(database, c).catch((err)=>{
             winston.info(`Failed building search pattern for competence ${id} : ${err}`);
         }));
+        winston.info(`Regular expression: "${regular_exp}"`);
         if (! regular_exp) continue;
+
 
         // match regular expression
         await (matchCompetence(database, id, regular_exp).then(()=>{
