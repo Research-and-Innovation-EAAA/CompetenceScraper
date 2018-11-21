@@ -35,14 +35,19 @@ async function matchCompetence(database: Database, competenceId: number, regular
     query = `delete FROM annonce_kompetence` +
         ` WHERE kompetence_id=${competenceId} AND ` +
         ` (annonce_id) in (select _id from ${tempTableName})`;
+    winston.info(query);
     await database.execute(query);
 
-    // Add matches
-    query = `insert ignore into annonce_kompetence (annonce_id, kompetence_id)` +
-        ` SELECT a._id annonce_id, ${competenceId} kompetence_id FROM annonce a ` +
-        ` WHERE ((a._id) in (select _id from ${tempTableName})) AND a.searchable_body REGEXP "${regular_exp}" `;
-    //winston.info(query);
-    await database.execute(query);
+    // Add new matches
+    const ROWCOUNT = 10000; // Max number of ads to match per query to avoid timeouts
+    for (let offset: number = 0 ; offset<scopeAds ; offset=offset+ROWCOUNT) {
+        query = `insert ignore into annonce_kompetence (annonce_id, kompetence_id)` +
+            ` ( SELECT a._id annonce_id, ${competenceId} kompetence_id FROM annonce a ` +
+            ` WHERE ((a._id) in (select _id from ${tempTableName})) AND a.searchable_body REGEXP "${regular_exp}" ` +
+            ` LIMIT ${offset},${ROWCOUNT} )`;
+        winston.info(query);
+        await database.execute(query);
+    }
 
     // Update match counter and time stamp
     query = "update kompetence set advertCount=(select count(*) from annonce_kompetence ak where ak.kompetence_id="+competenceId+"), lastMatch = CURRENT_TIMESTAMP() where kompetence._id="+competenceId;
