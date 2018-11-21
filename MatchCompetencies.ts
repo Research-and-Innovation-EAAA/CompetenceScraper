@@ -74,7 +74,7 @@ async function buildSearchPattern(database: Database, competence: Competence) : 
                 searchStr += "[[:<:]]";
             for (let i=0 ; i<label.length ; i++) {
                 let char = label[i];
-                let charText = specialChars.includes(char)?"\\\\\\\\"+char:char;
+                let charText = specialChars.includes(char)?"\\\\"+char:char;
                 searchStr += charText;
                 searchQuickStr += charText;
             }
@@ -148,6 +148,7 @@ export default async function matchCompetencies(database: Database) {
         if (!c) continue;
         let id: number = c.get("_id") ? c.get("_id") as number : NaN;
         if (!id) continue;
+        //if (id != 158798) continue;
 
         // Output match priority
         winston.info(`Priority=${i}, id=${id}`);
