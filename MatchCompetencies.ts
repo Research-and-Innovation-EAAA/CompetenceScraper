@@ -13,7 +13,7 @@ async function matchCompetence(database: Database, competenceId: number, regular
     let query: string = `DROP TABLE IF EXISTS ${tempTableName}`;
     //winston.info(query);
     await database.execute(query);
-    query = `CREATE TABLE ${tempTableName} (PRIMARY KEY(_id)) ENGINE=MEMORY ${advertIdScope} `;
+    query = `CREATE TABLE ${tempTableName} (count INT UNSIGNED AUTO_INCREMENT, _id INT UNSIGNED, KEY(_id), PRIMARY KEY(count)) ENGINE=MEMORY ${advertIdScope} `;
     //query = `CREATE TEMPORARY TABLE ${tempTableName} (PRIMARY KEY(_id)) ENGINE=MEMORY ${advertIdScope} `;
     //winston.info(query);
     await database.execute(query);
@@ -42,9 +42,8 @@ async function matchCompetence(database: Database, competenceId: number, regular
     const ROWCOUNT = 10000; // Max number of ads to match per query to avoid timeouts
     for (let offset: number = 0 ; offset<scopeAds ; offset=offset+ROWCOUNT) {
         query = `insert ignore into annonce_kompetence (annonce_id, kompetence_id)` +
-            ` ( SELECT a._id annonce_id, ${competenceId} kompetence_id FROM annonce a ` +
-            ` WHERE ((a._id) in (select _id from ${tempTableName})) AND a.searchable_body REGEXP "${regular_exp}" ` +
-            ` LIMIT ${offset},${ROWCOUNT} )`;
+            ` SELECT a._id annonce_id, ${competenceId} kompetence_id FROM annonce a ` +
+            ` WHERE ((a._id) in (select _id from ${tempTableName} WHERE count>${offset} AND count<=${offset+ROWCOUNT})) AND a.searchable_body REGEXP "${regular_exp}" `;
         winston.info(query);
         await database.execute(query);
     }
