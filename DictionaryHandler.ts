@@ -14,7 +14,7 @@ export async function convertAdvertToNumbers(database: Database){
     console.log(dataSize);
 
     for (let i = 1; i <= dataSize; i++){
-        console.log("Progress: " + i + " of " + dataSize);
+        //console.log("Progress: " + i + " of " + dataSize);
 
         let data = ((await database.loadAdvertTextNoNumberFormat(i)) as {_id: number, searchable_body: string}[]);
 
