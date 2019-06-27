@@ -13,8 +13,7 @@ async function matchCompetence(database: Database, competenceId: number, regular
     let query: string = `DROP TABLE IF EXISTS ${tempTableName}`;
     //winston.info(query);
     await database.execute(query);
-    query = `CREATE TABLE ${tempTableName} (count INT UNSIGNED AUTO_INCREMENT, _id INT UNSIGNED, KEY(_id), PRIMARY KEY(count)) ENGINE=MEMORY ${advertIdScope} `;
-    //query = `CREATE TEMPORARY TABLE ${tempTableName} (PRIMARY KEY(_id)) ENGINE=MEMORY ${advertIdScope} `;
+    query = `CREATE TABLE ${tempTableName} (count INT UNSIGNED AUTO_INCREMENT, _id INT UNSIGNED, KEY(_id), PRIMARY KEY(count)) ${advertIdScope} `;
     //winston.info(query);
     await database.execute(query);
 
