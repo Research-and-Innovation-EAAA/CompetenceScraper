@@ -6,8 +6,15 @@ import * as winston from "winston";
 import {generateTree} from "./CompetenceJSONTreeGenerator";
 import {convertAdvertToNumbers} from "./DictionaryHandler";
 
-type truthy = "YES" | "Y" | "1" | "true" | "True" | "TRUE";
-type falsy = "NO" | "N" | "0" | "false" | "False" | "FALSE";
+const stringLitArray = <L extends string>(arr: L[]) => arr;
+
+const truestring = stringLitArray(["YES", "Y", "1", "true", "True", "TRUE"]);
+export type truthy = (typeof truestring)[number];
+const isTrue = (x: any): x is truthy => truestring.includes(x);
+
+const falsestring = stringLitArray(["NO", "N", "0", "false", "False", "FALSE"]);
+export type falsy = (typeof falsestring)[number];
+const isFalse = (x: any): x is falsy => falsestring.includes(x);
 
 async function main() {
 
@@ -23,7 +30,7 @@ async function main() {
 
 
     // Scrape competencies
-    if (!<falsy>process.env.COMPETENCIES_SCRAPE) {
+    if (!isFalse(process.env.COMPETENCIES_SCRAPE)) {
         await scrape(database);
 
         //Generate JSON tree for R shinyTree
@@ -31,14 +38,12 @@ async function main() {
     }
 
     // Match competencies
-    if (!<falsy>process.env.COMPETENCIES_MATCH)
+    if (!isFalse(process.env.COMPETENCIES_MATCH))
         await matchCompetencies(database);
 
     // Dictionary Gen for Machine Learning
-    if (!<falsy>process.env.DICTIONARY_GEN)
+    if (!isFalse(process.env.DICTIONARY_GEN))
         await convertAdvertToNumbers(database);
-
-
 
     database.disconnect();
 }
