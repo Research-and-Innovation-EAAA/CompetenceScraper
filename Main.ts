@@ -10,11 +10,11 @@ const stringLitArray = <L extends string>(arr: L[]) => arr;
 
 const truestring = stringLitArray(["YES", "Y", "1", "true", "True", "TRUE"]);
 export type truthy = (typeof truestring)[number];
-const isTrue = (x: any): x is truthy => truestring.includes(x);
+const isTrue = (x: any): x is truthy => truestring.indexOf(x) > -1;
 
 const falsestring = stringLitArray(["NO", "N", "0", "false", "False", "FALSE"]);
 export type falsy = (typeof falsestring)[number];
-const isFalse = (x: any): x is falsy => falsestring.includes(x);
+const isFalse = (x: any): x is falsy => falsestring.indexOf(x) > -1;
 
 async function main() {
 
