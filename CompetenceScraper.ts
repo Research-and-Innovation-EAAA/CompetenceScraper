@@ -61,6 +61,16 @@ async function scrapeRecursive(database: Database, page: puppeteer.Page) {
         if (url) {
             await page.goto(url as string);
 
+            //wait for loading content
+            let article = undefined;
+            do {
+                let textElements : puppeteer.ElementHandle[] = await page.$x(`//*[@id="dataContainer"]/article`);
+                if (textElements.length>0)
+                    article = textElements[0];
+                else
+                    await page.waitFor(100);
+            } while (!article);
+
             // Scrape title and description
             competence.set("name", await getText(page,`//*[@id="dataContainer"]/article/header/h1/text()`));
             competence.set("prefferredLabel", competence.get("name"));
