@@ -27,7 +27,7 @@ async function matchCompetence(database: Database, competenceId: number, regular
     }
 
     // Update match counter and time stamp
-    query = "update kompetence set advertCount=null, lastMatch=NULL where kompetence._id="+competenceId;
+    query = "update kompetence set advertCount=null, lastMatch=NULL where dataField._id="+competenceId;
     await database.execute(query);
 
     // Remove old matches

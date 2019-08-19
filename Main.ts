@@ -5,6 +5,7 @@ import matchCompetencies from "./MatchCompetencies";
 import * as winston from "winston";
 import {generateTree} from "./CompetenceJSONTreeGenerator";
 import {convertAdvertToNumbers} from "./DictionaryHandler";
+import matchDataFields from "./MatchDataFields";
 
 const stringLitArray = <L extends string>(arr: L[]) => arr;
 
@@ -38,12 +39,22 @@ async function main() {
     }
 
     // Match competencies
-    if (!isFalse(process.env.COMPETENCIES_MATCH))
+    if (!isFalse(process.env.COMPETENCIES_MATCH)){
         await matchCompetencies(database);
+    }
+
 
     // Dictionary Gen for Machine Learning
-    if (!isFalse(process.env.DICTIONARY_GEN))
+    if (!isFalse(process.env.DICTIONARY_GEN)){
         await convertAdvertToNumbers(database);
+    }
+
+    //match datafields
+    if (!isFalse(process.env.DATAFIELDS_MATCH)){
+        await matchDataFields(database);
+    }
+
+
 
     database.disconnect();
 }

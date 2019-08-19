@@ -1,10 +1,12 @@
 import {Competence} from "./Competence";
+import {Datafield} from "./Datafield";
 import * as MYSQL from "mysql";
 import * as winston from "winston";
 import {isObject} from "util";
 import {CompetenceHierarchy} from "./CompetenceHierarchy";
 
 const COMPETENCE = "kompetence";
+const DATAFIELD = "dataField"
 const COMPETENCE_CATEGORY = "kompetence_kategorisering";
 const TITLE = "name";
 const DESCRIPTION = "description";
@@ -157,6 +159,33 @@ export class Database {
                             let prop = response[i][key];
                             if (prop !== null && prop !== undefined)
                                 result[i][key as keyof Competence] = prop;
+                        }
+                    }
+                    resolve(result);
+                });
+            }
+        });
+    }
+    loadDatafields() : Promise<Datafield[]> {
+        return new Promise((resolve,reject) => {
+            if (this.conn == undefined) {
+                reject(new Error("Not connected to database"));
+                return;
+            }
+            let q = `SELECT * FROM ${DATAFIELD}`;
+            if (this.options.getTesting()) {
+                winston.info(q);
+                resolve([]);
+            } else {
+                (this.conn as MYSQL.Connection).query(q, function (error, response) {
+                    if (error) reject(error);
+                    let result: Array<Datafield> = [];
+                    for (let i=0 ; i<response.length ; i++) {
+                        result[i] = new Datafield();
+                        for (let key in response[i]) {
+                            let prop = response[i][key];
+                            if (prop !== null && prop !== undefined)
+                                result[i][key as keyof Datafield] = prop;
                         }
                     }
                     resolve(result);
