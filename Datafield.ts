@@ -4,6 +4,7 @@ class IDatafield{
     regexp: string | undefined;
     extract: string | undefined;
     name: string | undefined;
+    jsonpath: string | undefined;
     lastUpdated: Date | undefined;
     lastMatch: Date | undefined;
 }

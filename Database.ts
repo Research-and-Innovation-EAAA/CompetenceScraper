@@ -137,6 +137,27 @@ export class Database {
             }
         });
     };
+    get(query: string) : Promise<any> {
+        return new Promise((resolve,reject) => {
+            if (this.options.getTesting()) {
+                winston.info(query);
+                resolve(0);
+            } else {
+                (this.conn as MYSQL.Connection).query(query, function (error, response) {
+                    if (error) reject(error);
+
+                    if(response.length > 0){
+                        let result : any;
+                        for (let key in response[0]) {
+                            result = response[0][key]
+                        }
+                        resolve(result);
+                    }
+                    resolve(0);
+                });
+            }
+        });
+    };
 
     loadCompetencies() : Promise<Competence[]> {
         return new Promise((resolve,reject) => {
