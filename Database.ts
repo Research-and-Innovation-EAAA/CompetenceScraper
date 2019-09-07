@@ -6,7 +6,7 @@ import {isObject} from "util";
 import {CompetenceHierarchy} from "./CompetenceHierarchy";
 
 const COMPETENCE = "kompetence";
-const DATAFIELD = "dataField"
+const DATAFIELD = "datafield"
 const COMPETENCE_CATEGORY = "kompetence_kategorisering";
 const TITLE = "name";
 const DESCRIPTION = "description";
