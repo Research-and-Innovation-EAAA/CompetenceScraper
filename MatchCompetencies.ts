@@ -102,6 +102,7 @@ async function buildSearchPattern(database: Database, competence: Competence) : 
 
 export default async function matchCompetencies(database: Database) {
     let competencies = await database.loadCompetencies();
+    winston.info("Match " + competencies.length + " competencies");
     competencies.sort((c1,c2)=> {
         let c1count : number | undefined = c1.get("advertCount");
         let c2count : number | undefined = c2.get("advertCount");
