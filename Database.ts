@@ -201,14 +201,16 @@ export class Database {
                 (this.conn as MYSQL.Connection).query(q, function (error, response) {
                     if (error) reject(error);
                     let result: Array<Datafield> = [];
-                    for (let i=0 ; i<response.length ; i++) {
-                        result[i] = new Datafield();
-                        for (let key in response[i]) {
-                            let prop = response[i][key];
-                            if (prop !== null && prop !== undefined)
-                                result[i][key as keyof Datafield] = prop;
-                        }
-                    }
+ 		    if (response) {
+			for (let i=0 ; i<response.length ; i++) {
+			    result[i] = new Datafield();
+			    for (let key in response[i]) {
+				let prop = response[i][key];
+				if (prop !== null && prop !== undefined)
+				    result[i][key as keyof Datafield] = prop;
+			    }
+			}
+		    }
                     resolve(result);
                 });
             }
