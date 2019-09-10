@@ -68,7 +68,13 @@ async function matchDataField(database: Database, datafieldId: number, jpQuery :
 async function parseJSON( json: string, jpQuery : string){
 
     json = json.replace(/\r?\n|\r/g,""); //remove newlines.
-    json = JSON.parse(json);
+
+    try {
+        json = JSON.parse(json);
+    } catch {
+        return "";
+    }
+
 
     return jp.query(json,jpQuery);
 }
