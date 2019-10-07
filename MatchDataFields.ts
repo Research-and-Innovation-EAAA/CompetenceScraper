@@ -67,11 +67,13 @@ async function matchDataField(database: Database, datafieldId: number, jpQuery :
 
 async function parseJSON( json: string, jpQuery : string){
 
-    json = json.replace(/\r?\n|\r/g,""); //remove newlines.
+    json = json.replace(/\r?\n|\r/g,""); // Remove newlines.
+    json = json.replace(/\t/g,""); // Remove tabs.
 
     try {
         json = JSON.parse(json);
     } catch {
+        winston.info("JSON parse error for json-path: " + jpQuery)
         return "";
     }
 
