@@ -272,7 +272,12 @@ export class Database {
             if (this.conn == undefined)
                 reject(new Error("Not connected to database"));
             else {
-                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel, grp) VALUES ("${competence.get("conceptUri")}", "${competence.get("prefferredLabel")}", "${competence.get("grp")}")`;
+                let grpValue = competence.get("grp");
+                if (!grpValue || grpValue=="")
+                    grpValue = "Misc";
+                let labelValue = competence.get("prefferredLabel");
+                let uriValue = competence.get("conceptUri");
+                let q = `INSERT INTO ${COMPETENCE} (conceptUri, prefferredLabel, grp) VALUES ("${uriValue}", "${labelValue}", "${grpValue}")`;
                 if (this.options.getTesting()) {
                     winston.info(q);
                     resolve();
