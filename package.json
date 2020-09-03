@@ -20,7 +20,7 @@
   "dependencies": {
     "jsonpath": "^1.0.2",
     "mysql": "^2.15.0",
-    "puppeteer": "^1.19.0",
+    "puppeteer": "^1.13.0",
     "winston": "^2.4.2"
   },
   "devDependencies": {
