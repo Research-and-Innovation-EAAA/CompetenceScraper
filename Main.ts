@@ -29,13 +29,12 @@ async function main() {
     winston.info("Database: " + database.about());
     await database.connect();
 
-
     // Scrape competencies
     if (!isFalse(process.env.COMPETENCIES_SCRAPE)) {
         await scrape(database);
 
         //Generate JSON tree for R shinyTree
-        //await generateTree(database);
+        await generateTree(database);
     }
 
     // Match competencies
@@ -54,8 +53,7 @@ async function main() {
         await matchDataFields(database);
     }
 
-
-
+    //close database connection
     database.disconnect();
 }
 
