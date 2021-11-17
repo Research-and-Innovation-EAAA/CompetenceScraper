@@ -31,10 +31,11 @@ async function scrapegrp(database: Database, page: puppeteer.Page, grp: string) 
             let match = onclickVal.match(/loadConcept\('(.*)'\).*/);
             if (!match)
                 continue;
+	    let prefferredLabel = anchor.name.trim();
             let child: Competence = new Competence({
                 "conceptUri": match[1],
-                "prefferredLabel": anchor.name,
-                "name": anchor.name,
+                "prefferredLabel": prefferredLabel,
+                "name": prefferredLabel,
                 "grp": grp
             });
             await database.storeCompetence(child)
